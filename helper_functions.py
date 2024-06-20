@@ -1,23 +1,5 @@
-#!/usr/bin/env python
 import numpy as np
 from math import sin, cos, sqrt
-
-def maximum_coil_radius(ntoroidalcurves, npoloidalcurves, nfp, stellsym, R0=1.0, R1=0.5):
-    '''
-    This function provides the maximum radius of the windowpane coils assuming
-    they lie on a cirular torus.
-    Input the number curves per toroidal spacing of 2pi/nfp/(1+int(stellsym)),
-    the number of curves per 2pi of poloidal spacing, the number of field periods,
-    whether or not there is stellarator symmetry, the major radius, and the
-    minor radius.
-    Output the maximum radius a coil can have on a cirucular torus winding
-    surface with major radius R0 and minor radius R1 before colliding with
-    another coil.
-    '''
-    poloidal_max_radius = R1*(1-cos((2*np.pi)/npoloidalcurves))
-    toroidal_max_radius = (R0-R1)*(1-cos((2*np.pi)/((1+int(stellsym))*nfp*ntoroidalcurves)))
-    coil_radius = min(poloidal_max_radius, toroidal_max_radius)
-    return coil_radius
 
 def remove_coils_on_curvature(coils, curvature_threshold, nfp, stellsym):
     """

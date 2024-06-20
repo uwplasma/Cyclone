@@ -32,8 +32,8 @@ from simsopt.geo import (SurfaceRZFourier, curves_to_vtk, create_equally_spaced_
                          LpCurveCurvature, CurveSurfaceDistance, CurveXYZFourier)
 from simsopt.objectives import Weight, SquaredFlux, QuadraticPenalty
 from simsopt.util import in_github_actions
-from create_windowpanes import (create_windowpane_curves, create_windowpane_with_modular_curves,
-                        remove_coils_on_curvature, remove_coils_on_current)
+from create_windowpanes import create_windowpane_curves, create_windowpane_with_modular_curves, maximum_coil_radius
+from helper_functions import remove_coils_on_curvature, remove_coils_on_current
 
 # Number of unique coil shapes, i.e. the number of coils per half field period:
 # (Since the configuration has nfp = 2, multiply by 4 to get the total number of coils.)
@@ -86,7 +86,7 @@ MSC_WEIGHT = 1e-6
 MAXITER = 50 if in_github_actions else 400
 
 # File for the desired boundary magnetic surface:
-TEST_DIR = (Path(__file__).parent / "simsopt" / "tests" / "test_files").resolve()
+TEST_DIR = (Path(__file__).parent / ".." / "simsopt" / "tests" / "test_files").resolve()
 filename = TEST_DIR / 'input.LandremanPaul2021_QA'
 
 # Directory for output
@@ -136,7 +136,7 @@ Jmscs = [MeanSquaredCurvature(c) for c in base_curves]
 # multiplied by scalars and added:
 JF = Jf \
     + LENGTH_WEIGHT * sum(Jls) \
-    + LENGTH_CONSTRAINT_WEIGHT * sum([QuadraticPenalty(J, LENGTH_THRESHOLD) for J in Jls])
+    + LENGTH_CONSTRAINT_WEIGHT * sum([QuadraticPenalty(J, LENGTH_THRESHOLD) for J in Jls]) \
     + CC_WEIGHT * Jccdist \
     + CS_WEIGHT * Jcsdist \
     + CURVATURE_WEIGHT * sum(Jcs) \
