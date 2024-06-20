@@ -32,7 +32,7 @@ from simsopt.geo import (SurfaceRZFourier, curves_to_vtk, create_equally_spaced_
                          LpCurveCurvature, CurveSurfaceDistance, CurveXYZFourier)
 from simsopt.objectives import Weight, SquaredFlux, QuadraticPenalty
 from simsopt.util import in_github_actions
-from windowpane_code import (create_windowpane_curves, create_windowpane_with_modular_curves,
+from create_windowpanes import (create_windowpane_curves, create_windowpane_with_modular_curves,
                         remove_coils_on_curvature, remove_coils_on_current)
 
 # Number of unique coil shapes, i.e. the number of coils per half field period:
