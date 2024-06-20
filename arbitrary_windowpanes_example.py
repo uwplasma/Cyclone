@@ -1,17 +1,10 @@
 #!/usr/bin/env python
 r"""
 
-Update this
-
-The purpose of this code is to test my cleaned up code for making windowpane
-in Simsopt and confirm that the code functions as needed by recreating the
-'stage_two_optimization' example file using the windowpane functions.
-
-From 'stage_two_optimization':
 In this example we solve a FOCUS like Stage II coil optimisation problem: the
-goal is to find coils that generate a specific target normal field on a given
-surface.  In this particular case we consider a vacuum field, so the target is
-just zero.
+goal is to find windowpane coils that generate a specific target normal field
+on a given surface.  In this particular case we consider a vacuum field, so
+the target is just zero.
 
 The objective is given by
 
