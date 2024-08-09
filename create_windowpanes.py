@@ -14,8 +14,8 @@ def maximum_coil_radius(ntoroidalcurves, npoloidalcurves, nfp, stellsym, R0=1.0,
     surface with major radius R0 and minor radius R1 before colliding with
     another coil.
     '''
-    poloidal_max_radius = R1*(1-cos((2*np.pi)/npoloidalcurves))
-    toroidal_max_radius = (R0-R1)*(1-cos((2*np.pi)/((1+int(stellsym))*nfp*ntoroidalcurves)))
+    poloidal_max_radius = R1*(1-cos((2*np.pi)/npoloidalcurves))/sin((2*np.pi)/npoloidalcurves)
+    toroidal_max_radius = (R0-R1)*(1-cos((2*np.pi)/((1+int(stellsym))*nfp*ntoroidalcurves)))/sin((2*np.pi)/((1+int(stellsym))*nfp*ntoroidalcurves))
     coil_radius = min(poloidal_max_radius, toroidal_max_radius)
     return coil_radius
 
@@ -250,7 +250,7 @@ def create_arbitrary_windowpanes(ntoroidalcurves, npoloidalcurves, nfp, stellsym
             pol_angle = j*(2*np.pi)/npoloidalcurves
             curve = CurveXYZFourier(numquadpoints, order)
             # Initialize the components
-            components = np.array([[0.0]*3 for i in range(1+2*order)])
+            components = np.array([[0.0]*3 for k in range(1+2*order)])
             if normaltowinding:
                 comps, normal_vec = winding_surface_function(tor_angle, pol_angle)
                 components[0] = list(comps)
@@ -332,7 +332,7 @@ def create_multiple_arbitrary_windowpanes(ntoroidalcurves, npoloidalcurves, nfp,
         cos_components_0 = [[0,0.034]]
         sin_components_1 = [[1,0]]
         cos_components_1 = [[0,0.5]]
-        base_curves = create_arbitrary_windowpanes(4, 12, 3, stellsym=True, sin_components_0, cos_components_0
+        base_curves = create_multiple_arbitrary_windowpanes(4, 12, 3, stellsym=True, sin_components_0, cos_components_0
                                                    sin_components_1 = sin_components_1, cos_components_1 = cos_components_1)
         base_currents = [Current(1e5) for c in base_curves]
         coils = coils_via_symmetries(base_curves, base_currents, 3, stellsym=True)
@@ -360,11 +360,11 @@ def create_multiple_arbitrary_windowpanes(ntoroidalcurves, npoloidalcurves, nfp,
             try:
                 sin_components = clean_components(sin_cos_comps['sin_components_{}'.format(i)], order)
             except:
-                sin_components = clean_components([[0,0]], order)
+                sin_components = clean_components([[np.max(sin_components_0),0]], order)
             try:
                 cos_components = clean_components(sin_cos_comps['cos_components_{}'.format(i)], order)
             except:
-                cos_components = clean_components([[0,0]], order)
+                cos_components = clean_components([[0,np.max(cos_components_0)]], order)
         else:
             sin_components = clean_components(sin_components_0, order)
             cos_components = clean_components(cos_components_0, order)
@@ -381,12 +381,12 @@ def create_multiple_arbitrary_windowpanes(ntoroidalcurves, npoloidalcurves, nfp,
             # Set the shape
             shape = shapes_matrix[i][j]
             if not shape == -1:
+                pol_angle = j*(2*np.pi)/npoloidalcurves
                 sin_components_this = sin_components_all[shape]
                 cos_components_this = cos_components_all[shape]
-                pol_angle = j*(2*np.pi)/npoloidalcurves
                 curve = CurveXYZFourier(numquadpoints, order)
                 # Initialize the components
-                components = np.array([[0.0]*3 for i in range(1+2*order)])
+                components = np.array([[0.0]*3 for k in range(1+2*order)])
                 if normaltowinding:
                     comps, normal_vec = winding_surface_function(tor_angle, pol_angle)
                     components[0] = list(comps)
