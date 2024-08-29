@@ -49,84 +49,6 @@ from helper_functions import rz_surf_to_xyz, rz_normal_to_xyz
 from optimization_functions import set_shapes_matrix, multiple_sin_cos_components_to_xyz, multiple_change_jacobian, change_arbitrary_windowpanes
 from verification import set_JF, set_coil_parameters, find_sum_planar_error_mult_epsilon
 
-'''
-@partial(jax.jit, static_argnames=['ntoroidalcurves','npoloidalcurves', 'nfp', 'stellsym', 'winding_surface_function', 'normaltowinding', 'order'])
-def sin_cos_components_to_xyz(dofsarr, ntoroidalcurves, npoloidalcurves, nfp, stellsym,
-                                 winding_surface_function = None, normaltowinding=False, order=5):
-    sin_components = dofsarr[:2*order].reshape(order,2)
-    cos_components = dofsarr[2*order:].reshape(order,2)
-    curves_xyz_dofs = jnp.array([])
-    for i in range(int(ntoroidalcurves)):
-        tor_angle = (i+0.5)*(2*np.pi)/((1+int(stellsym))*nfp*ntoroidalcurves)
-        for j in range(int(npoloidalcurves)):
-            pol_angle = j*(2*np.pi)/npoloidalcurves
-            # Initialize the components
-            components = jnp.array([],float)
-            if normaltowinding:
-                comps, normal_vec = winding_surface_function(tor_angle, pol_angle)
-                tor_winding = atan2(normal_vec[1], normal_vec[0])
-                pol_winding = atan2(normal_vec[2], sqrt(normal_vec[0] ** 2 + normal_vec[1] ** 2))
-                planar_vectors = planar_vector_list(tor_winding, pol_winding)
-            else:
-                planar_vectors = planar_vector_list(tor_angle, pol_angle)
-            # Set the components
-            for ord in range(order):
-                scomponent = sin_components[ord][0]*planar_vectors[0] + sin_components[ord][1]*planar_vectors[1]
-                ccomponent = cos_components[ord][0]*planar_vectors[0] + cos_components[ord][1]*planar_vectors[1]
-                components = jnp.append(components, scomponent)
-                components = jnp.append(components, ccomponent)
-            curve_xyz_dofs = components.reshape((2*order,3)).T.flatten()
-            curves_xyz_dofs = jnp.append(curves_xyz_dofs, curve_xyz_dofs)
-    return curves_xyz_dofs
-
-@partial(jax.jit, static_argnames=['ntoroidalcurves','npoloidalcurves', 'nfp', 'stellsym', 'unique_shapes', 'winding_surface_function', 'normaltowinding', 'order'])
-def multiple_sin_cos_components_to_xyz(dofsarr, ntoroidalcurves, npoloidalcurves, nfp, stellsym, unique_shapes,
-                                       winding_surface_function = None, normaltowinding=False, order=5):
-    global shapes_matrix
-    sin_components_all = [None]*unique_shapes
-    cos_components_all = [None]*unique_shapes
-    for i in range(unique_shapes):
-        sin_components_all[i] = dofsarr[2*order*(2*i):2*order*(2*i+1)].reshape(order,2)
-        cos_components_all[i] = dofsarr[2*order*(2*i+1):2*order*(2*i+2)].reshape(order,2)
-    curves_xyz_dofs = jnp.array([])
-    for i in range(int(ntoroidalcurves)):
-        tor_angle = (i+0.5)*(2*np.pi)/((1+int(stellsym))*nfp*ntoroidalcurves)
-        for j in range(int(npoloidalcurves)):
-            shape = shapes_matrix[i][j]
-            if not shape == -1:
-                pol_angle = j*(2*np.pi)/npoloidalcurves
-                sin_components_this = sin_components_all[shape]
-                cos_components_this = cos_components_all[shape]
-                # Initialize the components
-                components = jnp.array([],float)
-                if normaltowinding:
-                    comps, normal_vec = winding_surface_function(tor_angle, pol_angle)
-                    tor_winding = atan2(normal_vec[1], normal_vec[0])
-                    pol_winding = atan2(normal_vec[2], sqrt(normal_vec[0] ** 2 + normal_vec[1] ** 2))
-                    planar_vectors = planar_vector_list(tor_winding, pol_winding)
-                else:
-                    planar_vectors = planar_vector_list(tor_angle, pol_angle)
-                # Set the components
-                for ord in range(order):
-                    scomponent = sin_components_this[ord][0]*planar_vectors[0] + sin_components_this[ord][1]*planar_vectors[1]
-                    ccomponent = cos_components_this[ord][0]*planar_vectors[0] + cos_components_this[ord][1]*planar_vectors[1]
-                    components = jnp.append(components, scomponent)
-                    components = jnp.append(components, ccomponent)
-                curve_xyz_dofs = components.reshape((2*order,3)).T.flatten()
-                curves_xyz_dofs = jnp.append(curves_xyz_dofs, curve_xyz_dofs)
-    return curves_xyz_dofs
-
-change_jacobian = jax.jacfwd(sin_cos_components_to_xyz)
-multiple_change_jacobian = jax.jacfwd(multiple_sin_cos_components_to_xyz)
-
-def change_arbitrary_windowpanes(curves, curves_xyz_dofs):
-    global shapes_matrix
-    curves_xyz_dofs = curves_xyz_dofs.reshape(((ntoroidalcoils*npoloidalcoils - np.sum(shapes_matrix == -1)),6*order))
-    list_dofs = curves_xyz_dofs.tolist()
-    for i in range(len(list_dofs)):
-        curves[i].x = list_dofs[i]
-'''
-
 # Number of unique coil shapes, i.e. the number of coils per half field period:
 # (Since the configuration has nfp = 2, multiply by 4 to get the total number of coils.)
 ntoroidalcoils = 10
@@ -176,13 +98,17 @@ coil_winding_surface = "Extended off of plasma surface"
 #coil_winding_surface = "User input"
 #coil_winding_surface = "User input with normal to winding"
 
-unique_shapes = 15
+unique_shapes = 6
 '''
 shapes_matrix = np.array([[0,0,0,1,1,2,2,0,0,0,-1,-1],
                  [1,1,1,2,2,0,0,1,1,1,-1,-1],
                  [2,2,2,0,0,1,1,2,2,2,-1,-1]])
 '''
 
+shapes = np.append(-1, np.arange(unique_shapes))
+shapes_matrix = np.random.choice(shapes, (ntoroidalcoils, npoloidalcoils))
+
+print(shapes_matrix)
 
 try:
     shapes_matrix
@@ -245,7 +171,7 @@ LENGTH_THRESHOLD = 2*np.pi*maximum_coil_radius(ntoroidalcoils, npoloidalcoils, n
 LENGTH_CONSTRAINT_WEIGHT = 0.1
 
 # Threshold and weight for the coil-to-coil distance penalty in the objective function:
-CC_THRESHOLD = 0.1
+CC_THRESHOLD = 0.03
 CC_WEIGHT = 1000
 
 # Threshold and weight for the coil-to-surface distance penalty in the objective function:
@@ -413,13 +339,13 @@ Jmscs = [MeanSquaredCurvature(c) for c in base_curves]
 # Form the total objective function. To do this, we can exploit the
 # fact that Optimizable objects with J() and dJ() functions can be
 # multiplied by scalars and added:
-JF = Jf #\
-#    + CC_WEIGHT * Jccdist #\
-#    + LENGTH_WEIGHT * sum(Jls) \
-#    + LENGTH_CONSTRAINT_WEIGHT * sum([QuadraticPenalty(J, LENGTH_THRESHOLD) for J in Jls]) \
-#    + MSC_WEIGHT * sum(QuadraticPenalty(J, MSC_THRESHOLD, "max") for J in Jmscs)
-#    + CURVATURE_WEIGHT * sum(Jcs) \
-#    + CS_WEIGHT * Jcsdist \
+JF = Jf \
+    + LENGTH_WEIGHT * sum(Jls) \
+    + CC_WEIGHT * Jccdist \
+    + CURVATURE_WEIGHT * sum(Jcs) #\
+#    + LENGTH_CONSTRAINT_WEIGHT * sum([QuadraticPenalty(J, LENGTH_THRESHOLD) for J in Jls]) #\
+#    + MSC_WEIGHT * sum(QuadraticPenalty(J, MSC_THRESHOLD, "max") for J in Jmscs) #\
+#    + CS_WEIGHT * Jcsdist #\
 
 # We don't have a general interface in SIMSOPT for optimisation problems that
 # are not in least-squares form, so we write a little wrapper function that we
@@ -474,13 +400,13 @@ df.to_excel('output/test.xlsx', index=False)
 
 init_dofs = list(dofs)
 
-error_vec = find_sum_planar_error_mult_epsilon(init_dofs, first_epsilon = 0.0001, num_epsilon = 5, printout=True, graph=False, save=True)
+#error_vec = find_sum_planar_error_mult_epsilon(init_dofs, first_epsilon = 0.0001, num_epsilon = 5, printout=True, graph=False, save=True)
 
-print("Error vec:")
-print(error_vec)
+#print("Error vec:")
+#print(error_vec)
 
-#res = minimize(fun, dofs, jac=True, method='L-BFGS-B', options={'maxiter': MAXITER, 'maxcor': 300}, tol=1e-15)
-res = minimize(fun, dofs, jac=True)
+res = minimize(fun, dofs, jac=True, method='L-BFGS-B', options={'maxiter': MAXITER, 'maxcor': 300}, tol=1e-15)
+#res = minimize(fun, dofs, jac=True)
 
 end_dofs = res.x
 
