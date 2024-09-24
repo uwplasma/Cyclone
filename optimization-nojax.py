@@ -34,9 +34,9 @@ import os
 from pathlib import Path
 import numpy as np
 from math import sin, cos
-import jax.numpy as jnp
-import jax
-from functools import partial
+#import jax.numpy as jnp
+#import jax
+#from functools import partial
 from scipy.optimize import minimize
 from simsopt.field import BiotSavart, Current, coils_via_symmetries, Coil, ToroidalField
 from simsopt.geo import (SurfaceRZFourier, curves_to_vtk, create_equally_spaced_curves,
@@ -46,15 +46,15 @@ from simsopt.objectives import Weight, SquaredFlux, QuadraticPenalty
 from simsopt.util import in_github_actions
 from create_windowpanes import create_arbitrary_windowpanes, maximum_coil_radius, clean_components, rotate_windowpane_shapes, planar_vector_list, create_multiple_arbitrary_windowpanes
 from helper_functions import rz_surf_to_xyz, rz_normal_to_xyz
-from optimization_functions import set_shapes_matrix, multiple_sin_cos_components_to_xyz, multiple_change_jacobian, change_arbitrary_windowpanes
+from optimization_functions import set_shapes_matrix, multiple_sin_cos_components_to_xyz_2, multiple_change_jacobian_2, change_arbitrary_windowpanes
 from verification import set_JF, set_coil_parameters, find_sum_planar_error_mult_epsilon
 from objective_functions import Max_BdotN
 
 # Number of unique coil shapes, i.e. the number of coils per half field period:
 # (Since the configuration has nfp = 2, multiply by 4 to get the total number of coils.)
-ntoroidalcoils = 10
-npoloidalcoils = 12
-nfp = 3
+ntoroidalcoils = 3
+npoloidalcoils = 73
+nfp = 2
 stellsym=True
 
 # The number of windings for each windowpane coil
@@ -68,7 +68,7 @@ B0 = 1
 R0 = 1.0
 
 # Minor radius of the toroidal surface and of the modular coils
-R1 = 0.3
+R1 = 0.5
 
 # Proportion of the maximum possible windowpane coils radius to use for
 # radius of the windowpane coils
@@ -91,32 +91,34 @@ sample_size = 1
 # Choose one option for the coil winding surface
 
 #coil_winding_surface = "Default circular torus"
-coil_winding_surface = "User input circular torus"
+#coil_winding_surface = "'User input' circular torus"
 #coil_winding_surface = "Plasma surface"
 #coil_winding_surface = "Plasma surface with normal to winding"
-#coil_winding_surface = "Extended off of plasma surface"
+coil_winding_surface = "Extended off of plasma surface"
 #coil_winding_surface = "Extended off of plasma surface with normal to winding"
 #coil_winding_surface = "User input"
 #coil_winding_surface = "User input with normal to winding"
 
-unique_shapes = 6
+#unique_shapes = int(15 * 22 / 5)
+unique_shapes = 3
 '''
 shapes_matrix = np.array([[0,0,0,1,1,2,2,0,0,0,-1,-1],
                  [1,1,1,2,2,0,0,1,1,1,-1,-1],
                  [2,2,2,0,0,1,1,2,2,2,-1,-1]])
 '''
 
-#shapes = np.append(-1, np.arange(unique_shapes))
-#shapes_matrix = np.random.choice(shapes, (ntoroidalcoils, npoloidalcoils))
+shapes = np.append(-1, np.arange(unique_shapes))
+shapes = np.arange(unique_shapes)
+shapes_matrix = np.random.choice(shapes, (ntoroidalcoils, npoloidalcoils))
 
-#print(shapes_matrix)
+print(shapes_matrix)
 
 try:
     shapes_matrix
 except:
     tile = np.array(range(unique_shapes))
     shapes_matrix = np.resize(tile, (ntoroidalcoils, npoloidalcoils))
-print(shapes_matrix)
+#print(shapes_matrix)
 # The sine and cosine components which describe the shape of the planar
 # windowpane coils
 # For circles:
@@ -189,15 +191,13 @@ MSC_WEIGHT = 1e-6
 
 # Penalty for the maximum B*n/B value
 MAX_BN_WEIGHT = 1.0
-NUM_BN = 30
 
 # Number of iterations to perform:
-MAXITER = 400 # if in_github_actions else 400
+MAXITER = 40 # if in_github_actions else 400
 
 # File for the desired boundary magnetic surface:
 TEST_DIR = (Path(__file__).parent).resolve()
-#filename = TEST_DIR / 'input.LandremanPaul2021_QA'
-filename = TEST_DIR / '../input.lowiota'
+filename = TEST_DIR / 'input.LandremanPaul2021_QA'
 
 # Directory for output
 OUT_DIR = "./output/"
@@ -216,9 +216,7 @@ if coil_winding_surface == "Default circular torus":
     winding_surface_function = None
 elif coil_winding_surface == "User input circular torus":
     def winding_surface_function(tor_angle, pol_angle):
-        return [(R0+R1*cos(pol_angle))*cos(tor_angle),
-                (R0+R1*cos(pol_angle))*sin(tor_angle),
-                R1*sin(pol_angle)]
+        return [cos(tor_angle)*cos(pol_angle),sin(tor_angle)*cos(pol_angle),sin(pol_angle)]
 elif coil_winding_surface == "Plasma surface":
     s.to_vtk(OUT_DIR + "surf_winding")
     def winding_surface_function(tor_angle, pol_angle):
@@ -342,7 +340,7 @@ Jccdist = CurveCurveDistance(curves, CC_THRESHOLD, num_basecurves=ntoroidalcoils
 Jcsdist = CurveSurfaceDistance(curves, s, CS_THRESHOLD)
 Jcs = [LpCurveCurvature(c, 2, CURVATURE_THRESHOLD) for c in base_curves]
 Jmscs = [MeanSquaredCurvature(c) for c in base_curves]
-Jmbn = Max_BdotN(s, bs, definition='local', num_BdotN=NUM_BN)
+Jmbn = Max_BdotN(s, bs, definition='local')
 
 # Form the total objective function. To do this, we can exploit the
 # fact that Optimizable objects with J() and dJ() functions can be
@@ -362,15 +360,15 @@ JF = Jf \
 
 def fun(dofs):
     JF.x = list(dofs[:len(base_currents)]) + list(JF.x[len(base_currents):])
-    dofsarr = jnp.array(dofs[len(base_currents):])
-    curves_xyz_dofs = multiple_sin_cos_components_to_xyz(dofsarr, ntoroidalcoils, npoloidalcoils, 2, True,
+    dofsarr = np.array(dofs[len(base_currents):])
+    curves_xyz_dofs = multiple_sin_cos_components_to_xyz_2(dofsarr, ntoroidalcoils, npoloidalcoils, 2, True,
                                  unique_shapes, winding_surface_function = winding_surface_function, order=order)
     change_arbitrary_windowpanes(curves, curves_xyz_dofs)
     dofs_grad = JF.dJ()
-    jacobian = multiple_change_jacobian(dofsarr, ntoroidalcoils, npoloidalcoils, 2, True,
+    jacobian = multiple_change_jacobian_2(ntoroidalcoils, npoloidalcoils, 2, True,
                                  unique_shapes, winding_surface_function = winding_surface_function, order=order)
-    grad = jnp.matmul(dofs_grad[len(base_currents):].reshape((1,len(dofs_grad)-len(base_currents))), jacobian)
-    grad = jnp.append(jnp.array(dofs_grad[:len(base_currents)]), grad)
+    grad = np.matmul(dofs_grad[len(base_currents):].reshape((1,len(dofs_grad)-len(base_currents))), jacobian)
+    grad = np.append(np.array(dofs_grad[:len(base_currents)]), grad)
     J = JF.J()
     print(J)
     return J, grad
@@ -396,12 +394,12 @@ set_coil_parameters(ntoroidalcoils, npoloidalcoils, nfp, stellsym, unique_shapes
 
 best_start_dofs = dofs
 
-dofsarr = jnp.array(dofs[len(base_currents):])
-curves_xyz_dofs = multiple_sin_cos_components_to_xyz(dofsarr, ntoroidalcoils, npoloidalcoils, 2, True,
+dofsarr = np.array(dofs[len(base_currents):])
+curves_xyz_dofs = multiple_sin_cos_components_to_xyz_2(dofsarr, ntoroidalcoils, npoloidalcoils, 2, True,
                                  unique_shapes, winding_surface_function = winding_surface_function, order=order)
 change_arbitrary_windowpanes(curves, curves_xyz_dofs)
-multiple_change_jacobian = multiple_change_jacobian()
-jacobian = multiple_change_jacobian(dofsarr, ntoroidalcoils, npoloidalcoils, 2, True,
+#multiple_change_jacobian = multiple_change_jacobian()
+jacobian = multiple_change_jacobian_2(ntoroidalcoils, npoloidalcoils, 2, True,
                                  unique_shapes, winding_surface_function = winding_surface_function, order=order)
 
 df = pd.DataFrame(jacobian)
@@ -425,8 +423,8 @@ print(end_dofs)
 
 JF.x = list(end_dofs[:len(base_currents)]) + list(JF.x[len(base_currents):])
 
-dofsarr = jnp.array(end_dofs[len(base_currents):])
-curves_xyz_dofs = multiple_sin_cos_components_to_xyz(dofsarr, ntoroidalcoils, npoloidalcoils, 2, True,
+dofsarr = np.array(end_dofs[len(base_currents):])
+curves_xyz_dofs = multiple_sin_cos_components_to_xyz_2(dofsarr, ntoroidalcoils, npoloidalcoils, 2, True,
                                                      unique_shapes, winding_surface_function = winding_surface_function, order=order)
 change_arbitrary_windowpanes(curves, curves_xyz_dofs)
 
