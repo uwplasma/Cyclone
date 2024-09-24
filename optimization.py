@@ -31,6 +31,7 @@ The target equilibrium is the QA configuration of arXiv:2108.03711.
 
 import pandas as pd
 import os
+import sys
 from pathlib import Path
 import numpy as np
 from math import sin, cos
@@ -99,7 +100,9 @@ coil_winding_surface = "User input circular torus"
 #coil_winding_surface = "User input"
 #coil_winding_surface = "User input with normal to winding"
 
-unique_shapes = 6
+#unique_shapes = 6
+unique_shapes = int(sys.argv[1])
+
 '''
 shapes_matrix = np.array([[0,0,0,1,1,2,2,0,0,0,-1,-1],
                  [1,1,1,2,2,0,0,1,1,1,-1,-1],
@@ -472,7 +475,10 @@ s.to_vtk(OUT_DIR + "surf_opt_short", extra_data=pointData)
 # Save the optimized coil shapes and currents so they can be loaded into other scripts for analysis:
 bs.save(OUT_DIR + "biot_savart_opt.json")
 
-os.system("cp output/ ../../../../../mnt/c/Users/dseid/Downloads/ -r")
+
+
+#os.system("cp output/ ../../../../../mnt/c/Users/dseid/Downloads/ -r")
+
 
 last_obj, _ = fun(end_dofs)
 max_BdotN = np.max(np.abs(BdotN))
@@ -484,6 +490,3 @@ write_line = "{},{},{},{},{},{},{}".format(ntoroidalcoils, npoloidalcoils, uniqu
 with open('stats_info.csv', 'a') as f:
     f.write(write_line)
     f.write('\n')
-
-print(Jf.J())
-print(Jmbn.J())
