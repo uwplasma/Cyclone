@@ -2,16 +2,7 @@ import os
 import time
 import numpy as np
 import sys
-
-def generate_permutations(*args):
-    import itertools
-    from math import ceil
-    all_list = []
-    for set_ in args:
-        temp_list = np.arange(set_[1], set_[2], set_[3])
-        all_list = all_list + [['{}:{}'.format(set_[0], value) for value in temp_list]]
-    permutations = list(itertools.product(*all_list))
-    return(permutations)
+from helper_functions import generate_permutations
 
 num_iter = 30
 

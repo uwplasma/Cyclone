@@ -1,5 +1,7 @@
 import numpy as np
 from math import sin, cos, sqrt
+from qsc.qsc import Qsc
+import os
 
 def remove_coils_on_curvature(coils, curvature_threshold, nfp, stellsym):
     """
@@ -239,3 +241,55 @@ def rz_unitnormal_to_xyz(surface, tor_angle, pol_angle):
     '''
     normal = np.array(rz_normal_to_xyz(surface, tor_angle, pol_angle))
     return list(normal / np.sqrt(normal.dot(normal)))
+
+def scaled_stel(stel_like, alpha):
+    if not 0 < abs(alpha):
+        raise ValueError('Alpha must not be 0')
+    rc = [stel_like.rc[0]] + list(alpha * stel_like.rc[1:])
+    zs = [stel_like.zs[0]] + list(alpha * stel_like.zs[1:])
+    rs = [stel_like.rs[0]] + list(alpha * stel_like.rs[1:])
+    zc = [stel_like.zc[0]] + list(alpha * stel_like.zc[1:])
+    nfp = stel_like.nfp
+    etabar = stel_like.etabar
+    sigma0 = stel_like.sigma0
+    B0 = stel_like.B0
+    I2 = stel_like.I2
+    sG = stel_like.sG
+    spsi = stel_like.spsi
+    nphi = stel_like.nphi
+    B2s = stel_like.B2s
+    B2c = stel_like.B2c
+    p2 = stel_like.p2
+    order = stel_like.order
+    new_stel = Qsc(rc=rc, zs=zs, rs=rs, zc=zc, nfp=nfp, etabar=etabar, sigma0=sigma0, B0=B0,
+                   I2=I2, sG=sG, spsi=spsi, nphi=nphi, B2s=B2s, B2c=B2c, p2=p2, order=order)
+    return new_stel
+
+def save_scaled_iota(name_or_stel, out_dir='', filename = None, r=0.1, first_alpha = 0.1, last_alpha = 1, number_alpha = 13):
+    if not out_dir == '':
+        os.makedirs(out_dir, exist_ok=True)
+    alpha_space = np.linspace(first_alpha, last_alpha, number_alpha)
+    if type(name_or_stel) is str:
+        name = name_or_stel
+        stel = Qsc.from_paper(name_or_stel)
+    else:
+        name = 'custom'
+        stel = name_or_stel
+    if filename is not None:
+        name = filename
+    stel_list = [scaled_stel(stel, alpha) for alpha in alpha_space]
+    for stel in stel_list:
+        iota = round(stel.iota, 3)
+        if iota == 0:
+            iota = '<0.001'
+        stel.to_vmec(out_dir+'input.'+name.replace(' ','_')+'_iota:{}'.format(iota), r=r)
+
+def generate_permutations(*args):
+    import itertools
+    from math import ceil
+    all_list = []
+    for set_ in args:
+        temp_list = np.arange(set_[1], set_[2], set_[3])
+        all_list = all_list + [['{}:{}'.format(set_[0], value) for value in temp_list]]
+    permutations = list(itertools.product(*all_list))
+    return(permutations)
