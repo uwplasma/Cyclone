@@ -51,11 +51,73 @@ from optimization_functions import set_shapes_matrix, multiple_sin_cos_component
 from verification import set_JF, set_coil_parameters, find_sum_planar_error_mult_epsilon
 from objective_functions import Max_BdotN
 
+# Import any arguments provided on the command line:
+in_line = sys.argv
+
+for input in in_line:
+    if 'ntoroidalcoils' in input and 'ntoroidalcoils_TF' not in input:
+        ntoroidalcoils = int(input.replace('ntoroidalcoils:', ''))
+    if 'npoloidalcoils' in input:
+        npoloidalcoils = int(input.replace('npoloidalcoils:', ''))
+    if 'ntoroidalcoils_TF' in input:
+        ntoroidalcoils_TF = int(input.replace('ntoroidalcoils_TF:', ''))
+    if 'R0' in input:
+        R0 = float(input.replace('R0:', ''))
+    if 'R1' in input and 'R1_TF' not in input:
+        R1 = float(input.replace('R1:', ''))
+    if 'R1_TF' in input:
+        R1_TF = float(input.replace('R1_TF:',''))
+    if 'surface_extension' in input:
+        surface_extension = float(input.replace('surface_extension:', ''))
+    if 'unique_shapes' in input:
+        unique_shapes = int(input.replace('unique_shapes:', ''))
+    if 'input.' in input:
+        file = input
+    if 'MAXITER' in input:
+        MAXITER = int(input.replace('MAXITER:', ''))
+
+
+
+# File for the desired boundary magnetic surface:
+TEST_DIR = (Path(__file__).parent).resolve()
+try:
+    file
+except:
+    file = 'input.LandremanPaul2021_QA'
+
+filename = TEST_DIR / file
+
+#filename = TEST_DIR / 'input.LandremanPaul2021_QA'
+#filename = TEST_DIR / '../input.lowiota'
+
+# Directory for output
+OUT_DIR = "./output/"
+os.makedirs(OUT_DIR, exist_ok=True)
+
+# Initialize the boundary magnetic surface:
+nphi = 32
+ntheta = 32
+s = SurfaceRZFourier.from_vmec_input(filename, range="half period", nphi=nphi, ntheta=ntheta)
+
+nfp = s.nfp
+
 # Number of unique coil shapes, i.e. the number of coils per half field period:
 # (Since the configuration has nfp = 2, multiply by 4 to get the total number of coils.)
-ntoroidalcoils = 10
-npoloidalcoils = 12
-nfp = 3
+
+try:
+    ntoroidalcoils
+except:
+    ntoroidalcoils = 10
+try:
+    npoloidalcoils
+except:
+    npoloidalcoils = 15
+try:
+    ntoroidalcoils_TF
+except:
+    ntoroidalcoils_TF = ntoroidalcoils
+
+#nfp = 2
 stellsym=True
 
 # The number of windings for each windowpane coil
@@ -66,28 +128,40 @@ oneoverR = False
 B0 = 1
 
 # Major radius of the toroidal surface and of the modular coils
-R0 = 1.0
+try:
+    R0
+except:
+    R0 = 1.0
 
-# Minor radius of the toroidal surface and of the modular coils
-R1 = 0.3
+# Minor radius of the toroidal surface
+try:
+    R1
+except:
+    R1 = 0.3
 
 # Proportion of the maximum possible windowpane coils radius to use for
 # radius of the windowpane coils
 max_radius_prop = 1.0
 coil_radius = max_radius_prop * maximum_coil_radius(ntoroidalcoils, npoloidalcoils, nfp, stellsym, R0=R0, R1=R1)
 
+# Minor radius of TF coils
+try:
+    R1_TF
+except:
+    R1_TF = R1 + coil_radius
+
 # Number of Fourier modes describing each Cartesian component of each coil:
 order = 3
 
 # Distance to extend the coil winding surface away from the plasma surface
-surface_extension = 0.1
+try:
+    surface_extension
+except:
+    surface_extension = 0.1
 
 # Setting whether the coils' normals are along the normal of the winding
 # surface or pointing towards the primary axis
 normaltowinding = False
-
-# The number of initial conditions to randomly sample
-sample_size = 1
 
 # Choose one option for the coil winding surface
 
@@ -100,17 +174,17 @@ coil_winding_surface = "User input circular torus"
 #coil_winding_surface = "User input"
 #coil_winding_surface = "User input with normal to winding"
 
-#unique_shapes = 6
-unique_shapes = int(sys.argv[1])
+# The number of unique coil shapes:
+try:
+    unique_shapes
+except:
+    unique_shapes = 6
 
-'''
-shapes_matrix = np.array([[0,0,0,1,1,2,2,0,0,0,-1,-1],
-                 [1,1,1,2,2,0,0,1,1,1,-1,-1],
-                 [2,2,2,0,0,1,1,2,2,2,-1,-1]])
-'''
+random = True
 
-#shapes = np.append(-1, np.arange(unique_shapes))
-#shapes_matrix = np.random.choice(shapes, (ntoroidalcoils, npoloidalcoils))
+if random:
+    shapes = np.append(-1, np.arange(unique_shapes))
+    shapes_matrix = np.random.choice(shapes, (ntoroidalcoils, npoloidalcoils))
 
 #print(shapes_matrix)
 
@@ -195,25 +269,15 @@ MAX_BN_WEIGHT = 1.0
 NUM_BN = 30
 
 # Number of iterations to perform:
-MAXITER = 400 # if in_github_actions else 400
+try:
+    MAXITER
+except:
+    MAXITER = 400 # if in_github_actions else 400
 
-# File for the desired boundary magnetic surface:
-TEST_DIR = (Path(__file__).parent).resolve()
-#filename = TEST_DIR / 'input.LandremanPaul2021_QA'
-filename = TEST_DIR / '../input.lowiota'
-
-# Directory for output
-OUT_DIR = "./output/"
-os.makedirs(OUT_DIR, exist_ok=True)
 
 #######################################################
 # End of input parameters.
 #######################################################
-
-# Initialize the boundary magnetic surface:
-nphi = 32
-ntheta = 32
-s = SurfaceRZFourier.from_vmec_input(filename, range="half period", nphi=nphi, ntheta=ntheta)
 
 if coil_winding_surface == "Default circular torus":
     winding_surface_function = None
@@ -276,15 +340,15 @@ modular_curves = []
 if modular:
     for i in range(ntoroidalcoils):
         curve = CurveXYZFourier(75, order=1)
-        angle = (i+0.5)*(2*np.pi)/((1+int(stellsym))*nfp*ntoroidalcoils)
+        angle = (i+0.5)*(2*np.pi)/((1+int(stellsym))*nfp*ntoroidalcoils_TF)
         curve.set("xc(0)", cos(angle)*R0)
-        curve.set("xc(1)", cos(angle)*(R1+coil_radius))
+        curve.set("xc(1)", cos(angle)*(R1_TF))
         curve.set("yc(0)", sin(angle)*R0)
-        curve.set("yc(1)", sin(angle)*(R1+coil_radius))
+        curve.set("yc(1)", sin(angle)*(R1_TF))
         # The the next line, the minus sign is for consistency with
         # Vmec.external_current(), so the coils create a toroidal field of the
         # proper sign and free-boundary equilibrium works following stage-2 optimization.
-        curve.set("zs(1)", -(R1+coil_radius))
+        curve.set("zs(1)", -(R1_TF))
         curve.x = curve.x  # need to do this to transfer data to C++
         curve.fix_all()
         base_curves.append(curve)
@@ -306,7 +370,8 @@ for curr in mod_currents:
     base_currents.append(curr)
 '''
 
-base_currents = [Current(0.0001)*1e9 for c in base_curves]
+current_scaling = 1e9
+base_currents = [Current(0.0001)*current_scaling for c in base_curves]
 
 # Since the target field is zero, one possible solution is just to set all
 # currents to 0. To avoid the minimizer finding that solution, we fix one
@@ -484,8 +549,10 @@ last_obj, _ = fun(end_dofs)
 max_BdotN = np.max(np.abs(BdotN))
 meanabs_BdotN = np.mean(np.abs(BdotN))
 RMS_BdotN = (np.mean(BdotN*BdotN))**0.5
+max_current = max([c.x for c in base_currents])*current_scaling
+max_curvature = max([np.max(c.kappa()) for c in base_curves])
 
-write_line = "{},{},{},{},{},{},{}".format(ntoroidalcoils, npoloidalcoils, unique_shapes, last_obj, max_BdotN, meanabs_BdotN, RMS_BdotN)
+write_line = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}".format(file, ntoroidalcoils, npoloidalcoils, ntoroidalcoils_TF, R0, R1, R1_TF, surface_extension, unique_shapes, MAXITER, last_obj, max_BdotN, meanabs_BdotN, RMS_BdotN, max_current, max_curvature)
 
 with open('stats_info.csv', 'a') as f:
     f.write(write_line)
