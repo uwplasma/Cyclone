@@ -166,10 +166,10 @@ normaltowinding = False
 # Choose one option for the coil winding surface
 
 #coil_winding_surface = "Default circular torus"
-coil_winding_surface = "User input circular torus"
+#coil_winding_surface = "User input circular torus"
 #coil_winding_surface = "Plasma surface"
 #coil_winding_surface = "Plasma surface with normal to winding"
-#coil_winding_surface = "Extended off of plasma surface"
+coil_winding_surface = "Extended off of plasma surface"
 #coil_winding_surface = "Extended off of plasma surface with normal to winding"
 #coil_winding_surface = "User input"
 #coil_winding_surface = "User input with normal to winding"
@@ -549,10 +549,10 @@ last_obj, _ = fun(end_dofs)
 max_BdotN = np.max(np.abs(BdotN))
 meanabs_BdotN = np.mean(np.abs(BdotN))
 RMS_BdotN = (np.mean(BdotN*BdotN))**0.5
-max_current = max([c.x for c in base_currents])*current_scaling
+max_current = max([c.x for c in base_currents])[0]*current_scaling
 max_curvature = max([np.max(c.kappa()) for c in base_curves])
 
-write_line = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}".format(file, ntoroidalcoils, npoloidalcoils, ntoroidalcoils_TF, R0, R1, R1_TF, surface_extension, unique_shapes, MAXITER, last_obj, max_BdotN, meanabs_BdotN, RMS_BdotN, max_current, max_curvature)
+write_line = "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}".format(file[file.find('input.'):], ntoroidalcoils, npoloidalcoils, ntoroidalcoils_TF, R0, R1, R1_TF, surface_extension, unique_shapes, MAXITER, last_obj, max_BdotN, meanabs_BdotN, RMS_BdotN, max_current, max_curvature)
 
 with open('stats_info.csv', 'a') as f:
     f.write(write_line)

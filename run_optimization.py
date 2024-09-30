@@ -2,7 +2,7 @@ import os
 import time
 import numpy as np
 import sys
-from helper_functions import generate_permutations
+from helper_functions import generate_permutations, save_scaled_iota
 
 num_iter = 30
 
@@ -25,6 +25,7 @@ except:
     file = False
 
 input_dir = 'input/'
+init_stel = 'precise QA'
 
 line_list = generate_permutations(('ntoroidalcoils', 10, 11, 1),
                                   ('npoloidalcoils', 15, 16, 1),
@@ -33,13 +34,14 @@ line_list = generate_permutations(('ntoroidalcoils', 10, 11, 1),
                                   ('R1', 0.3, 0.4, 1),
                                   ('R1_TF', 0.4, 0.5, 1),
                                   ('surface_extension', 0.1, 0.2, 1),
-                                  ('unique_shapes', 10, 71, 15),
-                                  ('MAXITER', 100, 601, 100))
+                                  ('unique_shapes', 55, 56, 15),
+                                  ('MAXITER', 400, 401, 100))
 
 if file:
+    save_scaled_iota(init_stel, out_dir = input_dir, r=0.05)
     for file in os.listdir(input_dir):
         for in_line in line_list:
-            line = file + ' ' + str(in_line).replace('(','').replace(')','').replace("'",'').replace(',','')
+            line = input_dir + file + ' ' + str(in_line).replace('(','').replace(')','').replace("'",'').replace(',','')
             for i in range(num_iter):
                 while int(os.popen('ps -ef | grep optimization.py | wc -l').read()) - 2 > 5:
                     time.sleep(10)
