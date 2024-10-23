@@ -337,11 +337,11 @@ def create_multiple_arbitrary_windowpanes(ntoroidalcurves, npoloidalcurves, nfp,
         base_currents = [Current(1e5) for c in base_curves]
         coils = coils_via_symmetries(base_curves, base_currents, 3, stellsym=True)
     '''
-    shapes_matrix = np.array(shapes_matrix)
     if shapes_matrix is None:
         tile = np.array(range(unique_shapes))
         shapes_matrix = np.resize(tile, (ntoroidalcurves, npoloidalcurves))
     else:
+        shapes_matrix = np.array(shapes_matrix)
         assert shapes_matrix.shape == (ntoroidalcurves, npoloidalcurves)
     assert len(rotation_angles) == unique_shapes, 'Rotation angles must be a list of length unique_shapes'
     if numquadpoints is None:

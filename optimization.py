@@ -148,7 +148,8 @@ coil_radius = max_radius_prop * maximum_coil_radius(ntoroidalcoils, npoloidalcoi
 try:
     R1_TF
 except:
-    R1_TF = R1 + coil_radius
+    R1_TF = 0.5
+    #R1_TF = R1 + coil_radius
 
 # Number of Fourier modes describing each Cartesian component of each coil:
 order = 3
@@ -178,7 +179,7 @@ coil_winding_surface = "Extended off of plasma surface"
 try:
     unique_shapes
 except:
-    unique_shapes = 6
+    unique_shapes = 55
 
 random = True
 
@@ -298,7 +299,7 @@ elif coil_winding_surface == "Plasma surface with normal to winding":
         normal_vec = rz_normal_to_xyz(s, tor_angle, pol_angle)
         return xyz, normal_vec
 elif coil_winding_surface == "Extended off of plasma surface":
-    extended_surface = SurfaceRZFourier.from_vmec_input(filename, range="half period", nphi=nphi, ntheta=ntheta)
+    extended_surface = SurfaceRZFourier.from_vmec_input(filename, ntheta=ntheta, nphi=nphi, range='half period')
     extended_surface.extend_via_normal(surface_extension)
     extended_surface.to_vtk(OUT_DIR + "surf_winding")
     def winding_surface_function(tor_angle, pol_angle):
@@ -336,9 +337,8 @@ for i in range(2):
                                                fixed = True, normaltowinding=normaltowinding, order = order, sin_components_1 = sin_components_1,
                                                cos_components_1 = cos_components_1, sin_components_2 = sin_components_2, cos_components_2 = cos_components_2)
 
-modular_curves = []
 if modular:
-    for i in range(ntoroidalcoils):
+    for i in range(ntoroidalcoils_TF):
         curve = CurveXYZFourier(75, order=1)
         angle = (i+0.5)*(2*np.pi)/((1+int(stellsym))*nfp*ntoroidalcoils_TF)
         curve.set("xc(0)", cos(angle)*R0)
