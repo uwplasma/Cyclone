@@ -1,5 +1,5 @@
 import numpy as np
-from math import sin, cos, atan2
+from math import sin, cos, atan2, sqrt
 import jax
 from functools import partial
 import jax.numpy as jnp
@@ -203,6 +203,21 @@ def multiple_change_jacobian():
 
 def multiple_change_jacobian_2(ntoroidalcurves, npoloidalcurves, nfp, stellsym, unique_shapes,
                                        winding_surface_function = None, normaltowinding=False, order=5):
+    """Creates the jacobian between the simsopt dofs and the planar windowpane coil dofs.
+
+    Args:
+        ntoroidalcurves (int): Number of rings of windowpane coils
+        npoloidalcurves (int): Number of windowpane coils per ring.
+        nfp (int): Number of field periods
+        stellsym (bool): Boolean defining stellarator symmetry
+        unique_shapes (int): Number of unique windowpane shapes across all windowpane coils
+        winding_surface_function (func, optional): A function specifying where the centers of the coils were initialized. Defaults to None.
+        normaltowinding (bool, optional): Boolean defining whether windowpane area normals are pointed at the center axis (False) or along the normal of the winding surface (True). Defaults to False.
+        order (int, optional): The maximum order of Fourier components included in the coils. Defaults to 5.
+
+    Returns:
+        2d_np.ndarray: The jacobian determining the transformation from the simsopt dofs basis to the planar windowpane coil dofs basis.
+    """
     from create_windowpanes import planar_vector_list
     for i in range(ntoroidalcurves):
         tor_angle = (i+0.5)*(2*np.pi)/((1+int(stellsym))*nfp*ntoroidalcurves)

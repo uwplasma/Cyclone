@@ -3,6 +3,18 @@ from math import cos, sin, atan2, sqrt
 from create_windowpanes import planar_vector_list
 
 def r_axis(raxiscc, tor_angle, raxiscs = None):
+    """Given the cosine (and optionally sine) Fourier components
+    of the r coordinate of the magnetic axis, returns the r coordinate
+    at the given toroidal angle.
+
+    Args:
+        raxiscc (list(float)): Cosine Fourier components of the r coordinate.
+        tor_angle (float): Toroidal angle at which to evaluate the r coordinate of the magnetic axis.
+        raxiscs (list(float), optional): Sine Fourier components of the r coordinate. Defaults to None.
+
+    Returns:
+        float: The r coordinate of the magnetic axis at the given toroidal angle.
+    """
     r = 0
     for m in range(len(raxiscc)):
         r += raxiscc[m] * cos(m * tor_angle)
@@ -12,6 +24,18 @@ def r_axis(raxiscc, tor_angle, raxiscs = None):
     return r
 
 def z_axis(zaxiscs, tor_angle, zaxiscc = None):
+    """Given the sine (and optionally cosine) Fourier components
+    of the z coordinate of the magnetic axis, returns the z coordinate
+    at the given toroidal angle.
+
+    Args:
+        zaxiscs (list(float)): Sine Fourier components of the z coordinate.
+        tor_angle (float): Toroidal angle at which to evaluate the r coordinate of the magnetic axis.
+        zaxiscc (list(float), optional): Cosine Fourier components of the r coordinate. Defaults to None. Defaults to None.
+
+    Returns:
+        float: The z coordinate of the magnetic axis at the given toroidal angle.
+    """
     z = 0
     for m in range(len(zaxiscs)):
         z += zaxiscs[m] * sin(m * tor_angle)
@@ -21,6 +45,18 @@ def z_axis(zaxiscs, tor_angle, zaxiscc = None):
     return z
 
 def r_axis_prime(raxiscc, tor_angle, raxiscs = None):
+    """Given the cosine (and optionally sine) Fourier components
+    of the r coordinate of the magnetic axis, returns the derivative
+    of the r coordinate at the given toroidal angle.
+
+    Args:
+        raxiscc (list(float)): Cosine Fourier components of the r coordinate.
+        tor_angle (float): Toroidal angle at which to evaluate the r coordinate of the magnetic axis.
+        raxiscs (list(float), optional): Sine Fourier components of the r coordinate. Defaults to None.
+
+    Returns:
+        float: The derivative of the r component of the magnetic axis with respect to the toroidal angle at the given toroidal angle.
+    """
     r_ = 0
     for m in range(len(raxiscc)):
         r_ += -m * raxiscc[m] * sin(m * tor_angle)
@@ -30,6 +66,18 @@ def r_axis_prime(raxiscc, tor_angle, raxiscs = None):
     return r_
 
 def z_axis_prime(zaxiscs, tor_angle, zaxiscc = None):
+    """Given the sine (and optionally cosine) Fourier components
+    of the z coordinate of the magnetic axis, returns the derivative
+    of the z coordinate at the given toroidal angle.
+
+    Args:
+        zaxiscs (list(float)): Sine Fourier components of the z coordinate.
+        tor_angle (float): Toroidal angle at which to evaluate the z coordinate of the magnetic axis.
+        zaxiscc (list(float), optional): Cosine Fourier components of the z coordinate. Defaults to None.
+
+    Returns:
+        float: The derivative of the z component of the magnetic axis with respect to the toroidal angle at the given toroidal angle.
+    """
     z_ = 0
     for m in range(len(zaxiscs)):
         z_ += m * zaxiscs[m] * cos(m * tor_angle)
@@ -39,6 +87,21 @@ def z_axis_prime(zaxiscs, tor_angle, zaxiscc = None):
     return z_
 
 def del_phi(raxiscc, zaxiscs, tor_angle, raxiscs = None, zaxiscc = None):
+    """Given the cosine (and optionally sine) Fourier components
+    of the r coordinate and the sine (and optionally cosine) Fourier
+    components of the z coordinate of the magnetic axis, returns the
+    tangent vector to the magnetic axis at the given toroidal angle.
+
+    Args:
+        raxiscc (list(float)): Cosine Fourier components of the r coordinate.
+        zaxiscs (list(float)): Sine Fourier components of the z coordinate.
+        tor_angle (_type_): Toroidal angle at which to evaluate the derivatives of the magnetic axis.
+        raxiscs (list(float), optional): Sine Fourier components of the r coordinate. Defaults to None.
+        zaxiscc (list(float), optional): Cosine Fourier components of the z coordinate. Defaults to None.
+
+    Returns:
+        3_list(float): The tangent vector of the magnetic axis at the given toroidal angle.
+    """
     rax = r_axis(raxiscc, tor_angle, raxiscs = raxiscs)
     rax_ = r_axis_prime(raxiscc, tor_angle, raxiscs = raxiscs)
     zax_ = z_axis_prime(zaxiscs, tor_angle, zaxiscc = zaxiscc)
@@ -47,6 +110,26 @@ def del_phi(raxiscc, zaxiscs, tor_angle, raxiscs = None, zaxiscc = None):
     return [rax_*costerm - rax*sinterm, rax_*sinterm + rax*costerm, zax_]
 
 def create_TF_coils_on_magnetic_axis(file, ncurves, R1 = 0.5, order=1, numquadpoints=None, fixed='all'):
+    """Given a VMEC input. or wout.nc file and the desired number of curves per half-field-period, returns
+    a list of circular simsopt CurveXYZFourier objects with radius ''R1'' which are centered on the magnetic axis and whose area
+    normals point along the tangent of the magnetic axis equally spaced in toroidal angle.
+
+
+    Args:
+        file (VMEC input. or wout.nc file): The VMEC file from which to read the Fourier components of the magnetic axis.
+        ncurves (int): The number of simsopt curves to generate (per half-field-period).
+        R1 (float, optional): The radius of the circular curves. Defaults to 0.5.
+        order (int, optional): The maximum order of Fourier components to include in the CurveXYZFourier objects. Defaults to 1.
+        numquadpoints (int, optional): The number of quadrature points to evalute the curves at. Defaults to None.
+        fixed ((str, int, list, or np.ndarray), optional): A description of which - if any - of the orders of the curves to set to fixed. Defaults to 'all'.
+
+    Raises:
+        TypeError: The input file from which to determine the magnetic axis Fourier components was not able to be interpreted as a VMEC input. or wout.nc file. Support for user input lists and dictionaries may be added at a future date.
+        TypeError: The style of 'fixed' variable input by the user is not currently supported or was not able to be correctly interpreted.
+
+    Returns:
+        ncurves_list(simsopt CurveXYZFourier): An ncurves long list containing simsopt CurveXYZFourier objects at locations along the magnetic axis with their area normals pointing along the tangent of the magnetic axis.
+    """
     if 'input.' in file:
         import f90nml
         nml = f90nml.read('Cyclone/input.QI_NFP1_r1_test')['indata']
@@ -99,9 +182,9 @@ def create_TF_coils_on_magnetic_axis(file, ncurves, R1 = 0.5, order=1, numquadpo
         curve.set("zs(1)", R1 * planar_vectors[1][2])
         curve.x = curve.x  # need to do this to transfer data to C++
         if (fixed == 'all') or \
-           (type(fixed) == int and fixed>order) or \
+           (type(fixed) == int and fixed>=order) or \
            ((type(fixed) == list or type(fixed) == np.ndarray) and \
-                sum([orm in fixed for orm in list(range(ordd+1))])/(ordd+1) == 1):
+                sum([order_n in fixed for order_n in list(range(order+1))])/(order+1) == 1):
             curve.fix_all()
         elif type(fixed) == int:
             for i in range(fixed):

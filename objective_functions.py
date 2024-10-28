@@ -112,6 +112,12 @@ class Max_BdotN(Optimizable):
         Optimizable.__init__(self, x0=np.asarray([]), depends_on=[field])
     
     def J(self):
+        """Calculates the num_BdotN maximum B.n values on the surface and aggregates them based
+        on the specified definition.
+
+        Returns:
+            float: Objective evaluation
+        """
         n = self.surface.normal()
         absn = np.linalg.norm(n, axis=2)
         unitn = n * (1. / absn)[:, :, None]
@@ -153,6 +159,14 @@ class Max_BdotN(Optimizable):
     
     @derivative_dec
     def dJ(self):
+        """Calculates the gradient of the objective with respect to the simsopt dofs.
+
+        Raises:
+            ValueError: Non-supported definition for B.n evaluation.
+
+        Returns:
+            float: Gradient of the objective.
+        """
         n = self.surface.normal()
         absn = np.linalg.norm(n, axis=2)
         unitn = n * (1. / absn)[:, :, None]
