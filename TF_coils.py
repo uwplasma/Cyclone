@@ -132,7 +132,7 @@ def create_TF_coils_on_magnetic_axis(file, ncurves, R1 = 0.5, order=1, numquadpo
     """
     if 'input.' in file:
         import f90nml
-        nml = f90nml.read('Cyclone/input.QI_NFP1_r1_test')['indata']
+        nml = f90nml.read(file)['indata']
         raxiscc = nml['raxis_cc']
         zaxiscs = nml['zaxis_cs']
         nfp = nml['nfp']
@@ -144,7 +144,7 @@ def create_TF_coils_on_magnetic_axis(file, ncurves, R1 = 0.5, order=1, numquadpo
             zaxiscc = nml['zaxis_cc']
     elif 'wout' in file and '.nc' in file:
         from scipy.io import netcdf_file
-        f = netcdf_file('Cyclone/wout_QI_NFP1_r1_test.nc', mmap=False)
+        f = netcdf_file(file, mmap=False)
         raxiscc = f.variables['raxis_cc'][()]
         zaxiscs = f.variables['zaxis_cs'][()]
         nfp = f.variables['nfp'][()]
