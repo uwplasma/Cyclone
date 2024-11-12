@@ -66,7 +66,7 @@ def sin_cos_components_to_xyz(dofsarr, ntoroidalcurves, npoloidalcurves, nfp, st
             # Initialize the components
             components = jnp.array([],float)
             if normaltowinding:
-                comps, normal_vec = winding_surface_function(tor_angle, pol_angle)
+                _, normal_vec = winding_surface_function(tor_angle, pol_angle)
                 tor_winding = atan2(normal_vec[1], normal_vec[0])
                 pol_winding = atan2(normal_vec[2], sqrt(normal_vec[0] ** 2 + normal_vec[1] ** 2))
                 planar_vectors = planar_vector_list(tor_winding, pol_winding)

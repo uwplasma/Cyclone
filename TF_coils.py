@@ -2,7 +2,7 @@ import numpy as np
 from math import cos, sin, atan2, sqrt
 from create_windowpanes import planar_vector_list
 
-def r_axis(raxiscc, tor_angle, raxiscs = None):
+def r_axis(raxiscc, nfp, tor_angle, raxiscs = None):
     """Given the cosine (and optionally sine) Fourier components
     of the r coordinate of the magnetic axis, returns the r coordinate
     at the given toroidal angle.
@@ -17,13 +17,13 @@ def r_axis(raxiscc, tor_angle, raxiscs = None):
     """
     r = 0
     for m in range(len(raxiscc)):
-        r += raxiscc[m] * cos(m * tor_angle)
+        r += raxiscc[m] * cos(nfp * m * tor_angle)
     if raxiscs is not None:
         for m in range(len(raxiscs)):
-            r += raxiscs[m] * sin(m * tor_angle)
+            r += raxiscs[m] * sin(nfp * m * tor_angle)
     return r
 
-def z_axis(zaxiscs, tor_angle, zaxiscc = None):
+def z_axis(zaxiscs, nfp, tor_angle, zaxiscc = None):
     """Given the sine (and optionally cosine) Fourier components
     of the z coordinate of the magnetic axis, returns the z coordinate
     at the given toroidal angle.
@@ -38,13 +38,13 @@ def z_axis(zaxiscs, tor_angle, zaxiscc = None):
     """
     z = 0
     for m in range(len(zaxiscs)):
-        z += zaxiscs[m] * sin(m * tor_angle)
+        z += zaxiscs[m] * sin(nfp * m * tor_angle)
     if zaxiscc is not None:
         for m in range(len(zaxiscc)):
-            z += zaxiscc[m] * cos(m * tor_angle)
+            z += zaxiscc[m] * cos(nfp * m * tor_angle)
     return z
 
-def r_axis_prime(raxiscc, tor_angle, raxiscs = None):
+def r_axis_prime(raxiscc, nfp, tor_angle, raxiscs = None):
     """Given the cosine (and optionally sine) Fourier components
     of the r coordinate of the magnetic axis, returns the derivative
     of the r coordinate at the given toroidal angle.
@@ -59,13 +59,13 @@ def r_axis_prime(raxiscc, tor_angle, raxiscs = None):
     """
     r_ = 0
     for m in range(len(raxiscc)):
-        r_ += -m * raxiscc[m] * sin(m * tor_angle)
+        r_ += -nfp * m * raxiscc[m] * sin(nfp * m * tor_angle)
     if raxiscs is not None:
         for m in range(len(raxiscs)):
-            r_ += m * raxiscs[m] * cos(m * tor_angle)
+            r_ += nfp * m * raxiscs[m] * cos(nfp * m * tor_angle)
     return r_
 
-def z_axis_prime(zaxiscs, tor_angle, zaxiscc = None):
+def z_axis_prime(zaxiscs, nfp, tor_angle, zaxiscc = None):
     """Given the sine (and optionally cosine) Fourier components
     of the z coordinate of the magnetic axis, returns the derivative
     of the z coordinate at the given toroidal angle.
@@ -80,13 +80,13 @@ def z_axis_prime(zaxiscs, tor_angle, zaxiscc = None):
     """
     z_ = 0
     for m in range(len(zaxiscs)):
-        z_ += m * zaxiscs[m] * cos(m * tor_angle)
+        z_ += nfp * m * zaxiscs[m] * cos(nfp * m * tor_angle)
     if zaxiscc is not None:
         for m in range(len(zaxiscc)):
-            z_ += -m * zaxiscc[m] * sin(m * tor_angle)
+            z_ += -nfp * m * zaxiscc[m] * sin(nfp * m * tor_angle)
     return z_
 
-def del_phi(raxiscc, zaxiscs, tor_angle, raxiscs = None, zaxiscc = None):
+def del_phi(raxiscc, zaxiscs, nfp, tor_angle, raxiscs = None, zaxiscc = None):
     """Given the cosine (and optionally sine) Fourier components
     of the r coordinate and the sine (and optionally cosine) Fourier
     components of the z coordinate of the magnetic axis, returns the
@@ -102,9 +102,9 @@ def del_phi(raxiscc, zaxiscs, tor_angle, raxiscs = None, zaxiscc = None):
     Returns:
         3_list(float): The tangent vector of the magnetic axis at the given toroidal angle.
     """
-    rax = r_axis(raxiscc, tor_angle, raxiscs = raxiscs)
-    rax_ = r_axis_prime(raxiscc, tor_angle, raxiscs = raxiscs)
-    zax_ = z_axis_prime(zaxiscs, tor_angle, zaxiscc = zaxiscc)
+    rax = r_axis(raxiscc, nfp, tor_angle, raxiscs = raxiscs)
+    rax_ = r_axis_prime(raxiscc, nfp, tor_angle, raxiscs = raxiscs)
+    zax_ = z_axis_prime(zaxiscs, nfp, tor_angle, zaxiscc = zaxiscc)
     sinterm = sin(tor_angle)
     costerm = cos(tor_angle)
     return [rax_*costerm - rax*sinterm, rax_*sinterm + rax*costerm, zax_]
@@ -134,25 +134,25 @@ def create_TF_coils_on_magnetic_axis(file, ncurves, R1 = 0.5, order=1, numquadpo
         import f90nml
         nml = f90nml.read(file)['indata']
         raxiscc = nml['raxis_cc']
-        zaxiscs = nml['zaxis_cs']
+        zaxiscs = -np.array(nml['zaxis_cs'])
         nfp = nml['nfp']
         stellsym = not nml['lasym']
         raxiscs = None
         zaxiscc = None
         if not stellsym:
-            raxiscs = nml['raxis_cs']
+            raxiscs = -np.array(nml['raxis_cs'])
             zaxiscc = nml['zaxis_cc']
     elif 'wout' in file and '.nc' in file:
         from scipy.io import netcdf_file
         f = netcdf_file(file, mmap=False)
         raxiscc = f.variables['raxis_cc'][()]
-        zaxiscs = f.variables['zaxis_cs'][()]
+        zaxiscs = -f.variables['zaxis_cs'][()]
         nfp = f.variables['nfp'][()]
         stellsym = not bool(f.variables['lasym__logical__'][()])
         raxiscs = None
         zaxiscc = None
         if not stellsym:
-            raxiscs = f.variables['raxis_cs'][()]
+            raxiscs = -f.variables['raxis_cs'][()]
             zaxiscc = f.variables['zaxis_cc'][()]
     elif type(file) == list or type(file) == dict:
         raise TypeError('User input lists or dictionaries for axis parameters are not presently supported.')
@@ -165,8 +165,8 @@ def create_TF_coils_on_magnetic_axis(file, ncurves, R1 = 0.5, order=1, numquadpo
     for i in range(ncurves):
         curve = CurveXYZFourier(numquadpoints, order=order)
         angle = (i+0.5)*(2*np.pi)/((1+int(stellsym))*nfp*ncurves)
-        r = r_axis(raxiscc, angle, raxiscs = raxiscs)
-        normal_vec = del_phi(raxiscc, zaxiscs, angle, raxiscs = raxiscs, zaxiscc = zaxiscc)
+        r = r_axis(raxiscc, nfp, angle, raxiscs = raxiscs)
+        normal_vec = del_phi(raxiscc, zaxiscs, nfp, angle, raxiscs = raxiscs, zaxiscc = zaxiscc)
         tor_axis = atan2(normal_vec[1], normal_vec[0])
         pol_axis = atan2(normal_vec[2], sqrt(normal_vec[0] ** 2 + normal_vec[1] ** 2))
         planar_vectors = planar_vector_list(tor_axis, pol_axis)
@@ -176,8 +176,8 @@ def create_TF_coils_on_magnetic_axis(file, ncurves, R1 = 0.5, order=1, numquadpo
         curve.set("yc(0)", r * sin(angle))
         curve.set("yc(1)", R1 * planar_vectors[0][1])
         curve.set("ys(1)", R1 * planar_vectors[1][1])
-        curve.set("zc(0)", z_axis(zaxiscs, angle, zaxiscc = zaxiscc))
-        # planar_vectors[1][2] is 0 by definition so there is
+        curve.set("zc(0)", z_axis(zaxiscs, nfp, angle, zaxiscc = zaxiscc))
+        # planar_vectors[0][2] is 0 by definition so there is
         # no need to set the zc(1) component
         curve.set("zs(1)", R1 * planar_vectors[1][2])
         curve.x = curve.x  # need to do this to transfer data to C++
