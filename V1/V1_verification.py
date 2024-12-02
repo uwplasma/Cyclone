@@ -28,7 +28,7 @@ def set_coil_parameters(ntoroidalcoils_, npoloidalcoils_, nfp_, stellsym_, uniqu
            winding_surface_function, order, curves, num_currents
     Output: None
     '''
-    from optimization_functions import set_opt_coil_parameters
+    from V1.V1_optimization_functions import set_opt_coil_parameters
     global ntoroidalcoils, npoloidalcoils, nfp, stellsym, unique_shapes, winding_surface_function, order, curves, num_currents
     ntoroidalcoils = ntoroidalcoils_
     npoloidalcoils = npoloidalcoils_
@@ -226,7 +226,7 @@ def find_planar_error_mult_epsilon(index, init_dofs, first_epsilon = 0.1, num_ep
            graph (binary), save (binary), grad (array or None)
     Output: error_list (array), grad_list (array)
     '''
-    from optimization_functions import multiple_sin_cos_components_to_xyz, multiple_change_jacobian, change_arbitrary_windowpanes
+    from V1.V1_optimization_functions import multiple_sin_cos_components_to_xyz, multiple_change_jacobian, change_arbitrary_windowpanes
     if first_epsilon == "Scale":
         first_epsilon = set_scale_epsilon(init_dofs[index], printout)
     error_list = jnp.array([])
@@ -412,7 +412,7 @@ def find_sum_planar_error_mult_epsilon(init_dofs, first_epsilon = 0.1, num_epsil
            printout (binary), graph (binary), save (binary)
     Output: error_vec (array)
     '''
-    from optimization_functions import multiple_sin_cos_components_to_xyz, multiple_change_jacobian, change_arbitrary_windowpanes
+    from V1.V1_optimization_functions import multiple_sin_cos_components_to_xyz, multiple_change_jacobian, change_arbitrary_windowpanes
     assert type(first_epsilon) is not str, 'Cannot set first_epsilon = \'Scaled\' for consistent finite differences'
     error_mat = np.zeros((len(init_dofs), num_epsilon))
     grad_mat = np.zeros((len(init_dofs), num_epsilon))

@@ -16,8 +16,8 @@ from simsopt.geo import (SurfaceRZFourier, curves_to_vtk, create_equally_spaced_
 from simsopt.objectives import Weight, SquaredFlux, QuadraticPenalty
 from simsopt.util import in_github_actions
 from simsopt.configs import get_ncsx_data
-from create_windowpanes import create_arbitrary_windowpanes, maximum_coil_radius, clean_components, rotate_windowpane_shapes, planar_vector_list, create_multiple_arbitrary_windowpanes
-from helper_functions import rz_surf_to_xyz, rz_normal_to_xyz
+from V1.create_windowpanes import create_arbitrary_windowpanes, maximum_coil_radius, clean_components, rotate_windowpane_shapes, planar_vector_list, create_multiple_arbitrary_windowpanes
+from V1.V1_helper_functions import rz_surf_to_xyz, rz_normal_to_xyz
 
 nfp = 3
 stelsym = True

@@ -2,7 +2,7 @@ import os
 import time
 import numpy as np
 import sys
-from helper_functions import generate_permutations, save_scaled_iota
+from V1.V1_helper_functions import generate_permutations, save_scaled_iota
 
 num_iter = 30
 

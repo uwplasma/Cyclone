@@ -44,11 +44,11 @@ from simsopt.geo import (SurfaceRZFourier, curves_to_vtk, create_equally_spaced_
                          LpCurveCurvature, CurveSurfaceDistance, CurveXYZFourier)
 from simsopt.objectives import Weight, SquaredFlux, QuadraticPenalty
 from simsopt.util import in_github_actions
-from create_windowpanes import create_arbitrary_windowpanes, maximum_coil_radius, clean_components, rotate_windowpane_shapes, planar_vector_list, create_multiple_arbitrary_windowpanes
-from helper_functions import rz_surf_to_xyz, rz_normal_to_xyz
-from optimization_functions import set_shapes_matrix, multiple_sin_cos_components_to_xyz_2, multiple_change_jacobian_2, change_arbitrary_windowpanes
-from verification import set_JF, set_coil_parameters, find_sum_planar_error_mult_epsilon
-from objective_functions import Max_BdotN
+from V1.create_windowpanes import create_arbitrary_windowpanes, maximum_coil_radius, clean_components, rotate_windowpane_shapes, planar_vector_list, create_multiple_arbitrary_windowpanes
+from V1.V1_helper_functions import rz_surf_to_xyz, rz_normal_to_xyz
+from V1.V1_optimization_functions import set_shapes_matrix, multiple_sin_cos_components_to_xyz_2, multiple_change_jacobian_2, change_arbitrary_windowpanes
+from V1.V1_verification import set_JF, set_coil_parameters, find_sum_planar_error_mult_epsilon
+from V1.V1_objective_functions import Max_BdotN
 
 # Number of unique coil shapes, i.e. the number of coils per half field period:
 # (Since the configuration has nfp = 2, multiply by 4 to get the total number of coils.)

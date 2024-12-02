@@ -33,8 +33,8 @@ from simsopt.geo import (SurfaceRZFourier, curves_to_vtk, create_equally_spaced_
                          LpCurveCurvature, CurveSurfaceDistance, CurveXYZFourier)
 from simsopt.objectives import Weight, SquaredFlux, QuadraticPenalty
 from simsopt.util import in_github_actions
-from create_windowpanes import create_arbitrary_windowpanes, maximum_coil_radius
-from helper_functions import rz_surf_to_xyz, rz_normal_to_xyz
+from V1.create_windowpanes import create_arbitrary_windowpanes, maximum_coil_radius
+from V1.V1_helper_functions import rz_surf_to_xyz, rz_normal_to_xyz
 
 # Number of unique coil shapes, i.e. the number of coils per half field period:
 # (Since the configuration has nfp = 2, multiply by 4 to get the total number of coils.)

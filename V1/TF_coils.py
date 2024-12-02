@@ -1,6 +1,6 @@
 import numpy as np
 from math import cos, sin, atan2, sqrt
-from create_windowpanes import planar_vector_list
+from V1.create_windowpanes import planar_vector_list
 
 def r_axis(raxiscc, nfp, tor_angle, raxiscs = None):
     """Given the cosine (and optionally sine) Fourier components
