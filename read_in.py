@@ -81,6 +81,8 @@ def send_to_list(item):
 def clean_optimizables_dictionary(dictionary, coil_set_type, fixed):
     new_dictionary = {}
     new_dictionary['center_opt_flag'] = send_to_list(dictionary.pop('center_opt_flag', [False]))
+    if fixed == [] and any(new_dictionary['center_opt_flag']) == False:
+        fixed = [0]
     if 0 in fixed and any(new_dictionary['center_opt_flag']) == True:
         print('\'fixed\' variable containing 0 overrides \'center_opt_flag\' variable to False.')
         new_dictionary['center_opt_flag'] = [False] * len(new_dictionary['center_opt_flag'])
@@ -95,7 +97,7 @@ def clean_optimizables_dictionary(dictionary, coil_set_type, fixed):
         new_dictionary['nonplanar_opt_flag'] = send_to_list(dictionary.pop('nonplanar_opt_flag', [False]))
         new_dictionary['rotation_opt_flag'] = send_to_list(dictionary.pop('rotation_opt_flag', [False]))
         new_dictionary['normal_opt_flag'] = send_to_list(dictionary.pop('normal_opt_flag', [False]))
-    return new_dictionary
+    return new_dictionary, fixed
 
 def import_oneoverR_field(dictionary):
     from simsopt.field import ToroidalField
@@ -120,7 +122,7 @@ def import_simsopt_stellarator_coils(dictionary):
     dofs_dictionary = dictionary.pop('dofs', {})
     dofs_dictionary = clean_simsopt_dofs_dictionary(dofs_dictionary, order)
     optimizables_dictionary = dictionary.pop('optimizables', {})
-    optimizables_dictionary = clean_optimizables_dictionary(optimizables_dictionary, 'simsopt_stellarator', fixed)
+    optimizables_dictionary, fixed = clean_optimizables_dictionary(optimizables_dictionary, 'simsopt_stellarator', fixed)
     curves, ncurves, unfixed_orders, centers, center_tors, full_dofs, simsopt_dofs, axis_function = init_simsopt_stellarator_coils(axis_representation, ncurves, R1 = R1, order = order, numquadpoints = numquadpoints, fixed=fixed, dofs = dofs_dictionary)
     current_dictionary = dictionary.pop('currents', {})
     current_dictionary = clean_current_dictionary(current_dictionary, ncurves, default_current)
@@ -163,7 +165,7 @@ def import_cyclone_stellarator_coils(dictionary):
     fixed = fixed_to_list(fixed, order)
     sin_cos_components_dictionary = dictionary.pop('sin_cos_components', {})
     optimizables_dictionary = dictionary.pop('optimizables', {})
-    optimizables_dictionary = clean_optimizables_dictionary(optimizables_dictionary, 'cyclone_stellarator', fixed)
+    optimizables_dictionary, fixed = clean_optimizables_dictionary(optimizables_dictionary, 'cyclone_stellarator', fixed)
     curves, ncurves, unfixed_orders, planar_dofs, full_planar_dofs, nonplanar_dofs, full_nonplanar_dofs, normal_tors, normal_pols, rotation_angles, centers, center_tors, unique_shapes, shapes_vector, curve_shapes, axis_function = init_stellarator_coils(axis_representation, ncurves, unique_shapes=unique_shapes, tor_angles=normal_tors, pol_angles=normal_pols, rotation_vector=rotation_vector, tile_as=tile_as, R1 = R1, order=order, numquadpoints=numquadpoints, fixed=fixed, sin_cos_components = sin_cos_components_dictionary)
     if (unique_shapes / ncurves) > (1 - 0.5 / order):
         print('Given the number of unique shapes, the number of curves, and the order of the curves, less dofs will be created using simsopt curves than cyclone curves. You may want to consider augmenting your config file to use simsopt coils instead depending on your use case.')
@@ -217,7 +219,7 @@ def import_simsopt_windowpane_coils(dictionary):
     dofs_dictionary = dictionary.pop('dofs', {})
     dofs_dictionary = clean_simsopt_dofs_dictionary(dofs_dictionary, order)
     optimizables_dictionary = dictionary.pop('optimizables', {})
-    optimizables_dictionary = clean_optimizables_dictionary(optimizables_dictionary, 'simsopt_windowpane', fixed)
+    optimizables_dictionary, fixed = clean_optimizables_dictionary(optimizables_dictionary, 'simsopt_windowpane', fixed)
     curves, ntoroidalcurves, npoloidalcurves, unfixed_orders, centers, center_tors, center_pols, full_dofs, simsopt_dofs, surface_function = init_simsopt_windowpane_coils(surface_representation, ntoroidalcurves, npoloidalcurves, R0=R0, R1=R1, coil_radius = coil_radius, order=order, numquadpoints=numquadpoints, fixed=fixed, normal_to_winding=normal_to_winding, surface_extension=surface_extension, dofs = dofs_dictionary)
     current_dictionary = dictionary.pop('currents', {})
     current_dictionary = clean_current_dictionary(current_dictionary, (ntoroidalcurves, npoloidalcurves), default_current)
@@ -268,7 +270,7 @@ def import_cyclone_windowpane_coils(dictionary):
     fixed = fixed_to_list(fixed, order)
     sin_cos_components_dictionary = dictionary.pop('sin_cos_components', {})
     optimizables_dictionary = dictionary.pop('optimizables', {})
-    optimizables_dictionary = clean_optimizables_dictionary(optimizables_dictionary, 'cyclone_windowpane', fixed)
+    optimizables_dictionary, fixed = clean_optimizables_dictionary(optimizables_dictionary, 'cyclone_windowpane', fixed)
     curves, ntoroidalcurves, npoloidalcurves, unfixed_orders, planar_dofs, full_planar_dofs, nonplanar_dofs, full_nonplanar_dofs, normal_tors, normal_pols, rotation_angles, centers, center_tors, center_pols, unique_shapes, shapes_matrix, curve_shapes, surface_function = init_windowpane_coils(surface_representation, ntoroidalcurves, npoloidalcurves, unique_shapes=unique_shapes, tor_angles=normal_tors, pol_angles=normal_pols, rotation_matrix=rotation_matrix, tile_as=tile_as, R0=R0, R1=R1, coil_radius = coil_radius, order=order, numquadpoints=numquadpoints, fixed=fixed, normal_to_winding=normal_to_winding, surface_extension=surface_extension, sin_cos_components = sin_cos_components_dictionary)
     if (unique_shapes / sum(npoloidalcurves)) > (1 - 0.5 / order):
         print('Given the number of unique shapes, the number of curves, and the order of the curves, less dofs will be created using simsopt curves than cyclone curves. You may want to consider augmenting your config file to use simsopt coils instead depending on your use case.')
