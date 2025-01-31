@@ -50,7 +50,7 @@ def fixed_to_list(fixed, order):
     elif type(fixed) == list or type(fixed) == np.ndarray or type(fixed) == tuple:
         fixed_list = sorted([ord for ind, ord in enumerate(fixed) if ((ord <= order) and not ord in fixed[ind+1:])])
     elif fixed is None:
-        fixed_list = []
+        fixed_list = [None]
     else:
         raise TypeError('The input you entered for the \'fixed\' variable is not supported.')
     return fixed_list
@@ -81,7 +81,8 @@ def send_to_list(item):
 def clean_optimizables_dictionary(dictionary, coil_set_type, fixed):
     new_dictionary = {}
     new_dictionary['center_opt_flag'] = send_to_list(dictionary.pop('center_opt_flag', [False]))
-    if fixed == [] and any(new_dictionary['center_opt_flag']) == False:
+    if fixed == [None] and any(new_dictionary['center_opt_flag']) == False:
+        print('\'center_opt_flag\' being False overrides empty \'fixed\' variable to [0].')
         fixed = [0]
     if 0 in fixed and any(new_dictionary['center_opt_flag']) == True:
         print('\'fixed\' variable containing 0 overrides \'center_opt_flag\' variable to False.')
