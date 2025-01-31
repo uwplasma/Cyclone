@@ -82,8 +82,11 @@ def clean_optimizables_dictionary(dictionary, coil_set_type, fixed):
     new_dictionary = {}
     new_dictionary['center_opt_flag'] = send_to_list(dictionary.pop('center_opt_flag', [False]))
     if fixed == [None] and any(new_dictionary['center_opt_flag']) == False:
-        print('\'center_opt_flag\' being False overrides empty \'fixed\' variable to [0].')
+        print('Unspecified \'fixed\' variable becomes [0] due to \'center_opt_flag\' being False.')
         fixed = [0]
+    elif fixed == [None]:
+        print('Unspecified \'fixed\' variable becomes [] due to \'center_opt_flag\' being True.')
+        fixed = []
     if 0 in fixed and any(new_dictionary['center_opt_flag']) == True:
         print('\'fixed\' variable containing 0 overrides \'center_opt_flag\' variable to False.')
         new_dictionary['center_opt_flag'] = [False] * len(new_dictionary['center_opt_flag'])
