@@ -1,0 +1,15 @@
+TODO:
+- Create a readthedocs for Cyclone.
+- Tidy up README to be more accurate and descriptive of the current use cases for Cyclone.
+- Create more unit tests to confirm that individual pieces of the code are functional.
+- Create regression tests to confirm new updates to the code continue to function to the same extent as previous updates.
+- Start measuring code coverage.
+- Create GitHub actions to perform all necessary unit and regression tests automatically when new code is pushed.
+- Create example .toml files to show basic use cases for the code and how to format configuration files.
+- Expand built-in optimization tools to automatically process end of optimization, including updating dofs in dictionary and moving optimization flags forward a step.
+- Implement automatic loading in for remaining simsopt existing coil configurations.
+- Write direct jacobian function of optimization loop to replace use of jax taking the jacobian.
+- Jaxify optimization loop functions to optimize performance.
+- Implement more options for built-in optimization tools.
+- Create built-in workflows to simplify the process of running optimizations through Cyclone.
+- TBD
