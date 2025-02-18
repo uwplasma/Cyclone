@@ -120,7 +120,73 @@ def generate_permutations(*args):
     import itertools
     all_list = []
     for set_ in args:
-        temp_list = np.arange(set_[1], set_[2], set_[3])
-        all_list = all_list + [['{}:{}'.format(set_[0], value) for value in temp_list]]
+        if set_[1] == float:
+            temp_list = np.arange(set_[2], set_[3], set_[4])
+            all_list = all_list + [['{}:{}'.format(set_[0], value) for value in temp_list]]
+        elif set_[1] == int:
+            temp_list = np.arange(int(set_[2]), set_[3], int(set_[4]))
+            all_list = all_list + [['{}:{}'.format(set_[0], value) for value in temp_list]]
+        elif set_[1] == bool:
+            if set_[2] is None:
+                set_[2] = [True]
+            if not isinstance(set_[2], (list, np.ndarray, tuple)):
+                set_[2] = [set_[2]]
+            assert all([type(inp) == bool for inp in set_[2]]), "Entry into boolean variable is not a boolean."
+            # Also going to want to write a check to ensure there is at max only True and False in the list
+            all_list = all_list + [['{}:{}'.format(set_[0], value) for value in set_[2]]]
+        elif set_[1] == list:
+            if set_[2] is None:
+                set_[2] = ['default']
+            if not isinstance(set_[2], (list, np.ndarray, tuple)):
+                set_[2] = [set_[2]]
+            all_list = all_list + [['{}:{}'.format(set_[0], value) for value in set_[2]]]
+        elif set_[1] == 'file':
+            if not isinstance(set_[2], (list, np.ndarray, tuple)):
+                set_[2] = [set_[2]]
+            all_list = all_list + [['{}:{}'.format(set_[0], value) for value in set_[2]]]
+        else:
+            raise ValueError('Type of variable could not be successfully parsed.')
     permutations = list(itertools.product(*all_list))
     return(permutations)
+
+file_parameters = ['magnetic_surface', 'stellarator_axis_representation', 'windowpane_surface_representation']
+interger_parameters = ['MAXITER', 'stellarator_ncurves', 'stellarator_unique_shapes', 'stellarator_order', 'windowpane_ntoroidalcurves', 'windowpane_npoloidalcurves', 'windowpane_unique_shapes', 'windowpane_order']
+string_parameters = ['magnetic_surface', 'stellarator_axis_representation', 'stellarator_tile_as', 'stellarator_center_opt_type_flag', 'windowpane_surface_representation', 'windowpane_tile_as', 'windowpane_center_opt_type_flag']
+boolean_parameters = ['stellarator_planar_flag', 'stellarator_rotation_opt_flag', 'stellarator_normal_opt_flag', 'stellarator_center_opt_flag', 'stellarator_planar_opt_flag', 'stellarator_nonplanar_opt_flag', 'windowpane_planar_flag', 'windowpane_normal_to_winding', 'windowpane_rotation_opt_flag', 'windowpane_normal_opt_flag', 'windowpane_center_opt_flag', 'windowpane_planar_opt_flag', 'windowpane_nonplanar_opt_flag']
+
+def create_config_from_input_line(base_config, in_line, out_dir='', filename=None):
+    if filename is None:
+        filename = 'config_'
+    i = 0
+    while filename+f'{i}.toml' in os.listdir(out_dir):
+        i += 1
+    filename = filename + f'{i}'
+    parameters = [specification.split(':')[0] for specification in in_line]
+    values = [specification.split(':')[1] for specification in in_line]
+    with open(base_config, 'r') as f:
+        with open('{}/{}.toml'.format(out_dir, filename), 'w') as new_config:
+            for line in f.readlines():
+                if not 'replace' in line:
+                    new_config.write(line)
+                    continue
+                replacing_parameter = line[line.index("replace")+8:].replace('\n', '')
+                if not replacing_parameter in parameters:
+                    print(f"{replacing_parameter} not in parameters, so excluding line from config.") # Might not be an issue to just not include the line I guess? I usually do a good job with the default values (not for everything, though, so this is pretty dangerous)
+                    continue
+                replacing_value = values[parameters.index(replacing_parameter)]
+                if replacing_parameter in file_parameters and replacing_value == 'None':
+                    replacing_value = values[parameters.index('magnetic_surface')]
+                if replacing_value == 'default':
+                    #replacing_value = find_default_value(replacing_parameter)
+                    print(f"{replacing_parameter} set to default, so excluding line from config.")
+                if replacing_parameter in boolean_parameters:
+                    replacing_value = replacing_value.lower()
+                if replacing_parameter in interger_parameters:
+                    replacing_value = f"{int(float(replacing_value))}"
+                new_line = line[:line.index("replace")]
+                if replacing_parameter in string_parameters:
+                    new_line = new_line + f"'{replacing_value}'" + "\n"
+                else:
+                    new_line = new_line + f"{replacing_value}\n"
+                new_config.write(new_line)
+    return None

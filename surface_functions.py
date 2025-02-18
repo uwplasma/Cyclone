@@ -71,7 +71,7 @@ def surface_del_phi(rsurfacecc, zsurfacecs, nfp, tor_angle, pol_angle, rsurfacec
     r_phi = r_surface_prime_phi(rsurfacecc, nfp, tor_angle, pol_angle, rsurfacecs=rsurfacecs, n_min=n_min, m_min=m_min)
     z_phi = z_surface_prime_phi(zsurfacecs, nfp, tor_angle, pol_angle, zsurfacecc=zsurfacecc, n_min=n_min, m_min=m_min)
     costerm = jnp.cos(tor_angle)
-    sinterm = jnp.sin(pol_angle)
+    sinterm = jnp.sin(tor_angle)
     return [r_phi*costerm - r*sinterm, r_phi*sinterm + r*costerm, z_phi]
 
 def r_surface_prime_theta(rsurfacecc, nfp, tor_angle, pol_angle, rsurfacecs = None, n_min = None, m_min = 0):
@@ -109,7 +109,7 @@ def z_surface_prime_theta(zsurfacecs, nfp, tor_angle, pol_angle, zsurfacecc = No
 def surface_del_theta(rsurfacecc, zsurfacecs, nfp, tor_angle, pol_angle, rsurfacecs = None, zsurfacecc = None, n_min = None, m_min = 0):
     r_theta = r_surface_prime_theta(rsurfacecc, nfp, tor_angle, pol_angle, rsurfacecs=rsurfacecs, n_min=n_min, m_min=m_min)
     z_theta = z_surface_prime_theta(zsurfacecs, nfp, tor_angle, pol_angle, zsurfacecc=zsurfacecc, n_min=n_min, m_min=m_min)
-    return [r_theta*jnp.cos(tor_angle), r_theta*jnp.sin(pol_angle), z_theta]
+    return [r_theta*jnp.cos(tor_angle), r_theta*jnp.sin(tor_angle), z_theta]
 
 def surface_normal(rsurfacecc, zsurfacecs, nfp, tor_angle, pol_angle, rsurfacecs = None, zsurfacecc = None, n_min = None, m_min = 0):
     del_phi = surface_del_phi(rsurfacecc, zsurfacecs, nfp, tor_angle, pol_angle, rsurfacecs = rsurfacecs, zsurfacecc = zsurfacecc, n_min = n_min, m_min = m_min)
@@ -168,9 +168,15 @@ def import_surface(surface, surface_extension, normal_to_winding):
         m_min = 0
         nfp, stellsym, rsurfacecc, zsurfacecs, rsurfacecs, zsurfacecc = surface_from_wout(surface, surface_extension)
     elif surface is None or surface == 'default':
-        n_min = None
+        n_min = 0
         m_min = 0
-        raise TypeError('Default not implemented yet.')
+        #raise TypeError('Default not implemented yet.')
+        nfp = 2
+        stellsym = True
+        rsurfacecc = [[1.], [0.5]]
+        zsurfacecs = [[0.], [0.5]]
+        rsurfacecs = [[0.], [0.]]
+        zsurfacecc = [[0.], [0.]]
     elif type(surface) == list or type(surface) == dict:
         n_min = None
         m_min = 0

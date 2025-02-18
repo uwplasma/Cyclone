@@ -125,7 +125,6 @@ def init_simsopt_stellarator_coils(axis, ncurves, R1 = 0.5, order=1, numquadpoin
         curve.unfix_all()
         fix_curve(curve, order, fixed)
         curves.append(curve)
-    ncurves = len(curves)
     unfixed_orders = return_unfixed_orders(order, fixed)
     simsopt_dofs = unfixed_simsopt_dofs(simsopt_dofs_all, unfixed_orders)
     return curves, ncurves, unfixed_orders, centers, center_tors, simsopt_dofs_all, simsopt_dofs, axis_function
@@ -194,7 +193,6 @@ def init_stellarator_coils(axis, ncurves, unique_shapes=None, tor_angles=None, p
         fix_curve(curve, order, fixed)
         curves.append(curve)
         rotation_angles.append(rotation_angle)
-    ncurves = len(curves)
     unfixed_orders = return_unfixed_orders(order, fixed)
     full_planar_dofs = all_planar_dofs(sin_components_all, cos_components_all)
     planar_dofs = unfixed_planar_dofs(sin_components_all, cos_components_all, unfixed_orders)
@@ -245,7 +243,6 @@ def init_simsopt_windowpane_coils(surface, ntoroidalcurves, npoloidalcurves, R0=
             fix_curve(curve, order, fixed)
             curves.append(curve)
     unfixed_orders = return_unfixed_orders(order, fixed)
-    print(simsopt_dofs_all)
     simsopt_dofs = unfixed_simsopt_dofs(simsopt_dofs_all, unfixed_orders)
     return curves, ntoroidalcurves, npoloidalcurves, unfixed_orders, centers, center_tors, center_pols, simsopt_dofs_all, simsopt_dofs, surface_function
 

@@ -22,7 +22,6 @@ def unpack_curve_centers(dofs, ncurves, center_opt_flag, center_opt_type_flag):
         curve_centers = None
     return ncenter_dofs, curve_centers
 
-#@partial(jax.jit, static_argnames=['ncurves', 'unique_shapes', 'curve_shapes', 'rotation_angles', 'rotation_flag', 'normal_tors', 'normal_pols', 'normal_flag', 'unfixed_orders', 'planar_flag', 'center_opt_flag', 'center_opt_type_flag', 'axis_function'])
 @partial(jax.jit, static_argnames=['rotation_flag', 'normal_flag', 'planar_flag', 'planar_opt_flag', 'nonplanar_opt_flag', 'center_opt_flag', 'center_opt_type_flag', 'unique_shapes', 'ncurves', 'unfixed_orders', 'curve_shapes', 'axis_function'])
 def generate_simsopt_stellarator_dofs(cyclone_dofs, ncurves, unique_shapes, curve_shapes, rotation_angles, rotation_flag, normal_tors, normal_pols, normal_flag, unfixed_orders, planar_flag, planar_dofs, planar_opt_flag, nonplanar_dofs, nonplanar_opt_flag, center_opt_flag, center_opt_type_flag='direct', axis_function=None):
     sin_components_all = [None] * unique_shapes
@@ -103,7 +102,6 @@ cyclone_stellarator_jacobian = jax.jacfwd(generate_simsopt_stellarator_dofs)
 def calculate_cyclone_stellarator_jacobian(cyclone_dofs, ncurves, unique_shapes, curve_shapes, rotation_angles, rotation_flag, normal_tors, normal_pols, normal_flag, unfixed_orders, planar_flag, planar_dofs, planar_opt_flag, nonplanar_dofs, nonplanar_opt_flag, center_opt_flag, center_opt_type_flag='direct', axis_function=None):
     return cyclone_stellarator_jacobian(cyclone_dofs, ncurves, unique_shapes, curve_shapes, rotation_angles, rotation_flag, normal_tors, normal_pols, normal_flag, unfixed_orders, planar_flag, planar_dofs, planar_opt_flag, nonplanar_dofs, nonplanar_opt_flag, center_opt_flag, center_opt_type_flag=center_opt_type_flag, axis_function=axis_function)
 
-#@partial(jax.jit, static_argnames=['ncurves', 'unique_shapes', 'curve_shapes', 'rotation_angles', 'rotation_flag', 'normal_tors', 'normal_pols', 'normal_flag', 'unfixed_orders', 'planar_flag', 'center_opt_flag', 'center_opt_type_flag', 'surface_function'])
 @partial(jax.jit, static_argnames=['rotation_flag', 'normal_flag', 'planar_flag', 'planar_opt_flag', 'nonplanar_opt_flag', 'center_opt_flag', 'center_opt_type_flag', 'surface_function', 'unique_shapes', 'unfixed_orders', 'curve_shapes', 'ncurves'])
 def generate_simsopt_windowpane_dofs(cyclone_dofs, ncurves, unique_shapes, curve_shapes, rotation_angles, rotation_flag, normal_tors, normal_pols, normal_flag, unfixed_orders, planar_flag, planar_dofs, planar_opt_flag, nonplanar_dofs, nonplanar_opt_flag, center_opt_flag, center_opt_type_flag='direct', surface_function=None):
     sin_components_all = [None] * unique_shapes
@@ -186,7 +184,6 @@ cyclone_windowpane_jacobian = jax.jacfwd(generate_simsopt_windowpane_dofs)
 def calculate_cyclone_windowpane_jacobian(cyclone_dofs, ncurves, unique_shapes, curve_shapes, rotation_angles, rotation_flag, normal_tors, normal_pols, normal_flag, unfixed_orders, planar_flag, planar_dofs, planar_opt_flag, nonplanar_dofs, nonplanar_opt_flag, center_opt_flag, center_opt_type_flag='direct', surface_function=None):
     return cyclone_windowpane_jacobian(cyclone_dofs, ncurves, unique_shapes, curve_shapes, rotation_angles, rotation_flag, normal_tors, normal_pols, normal_flag, unfixed_orders, planar_flag, planar_dofs, planar_opt_flag, nonplanar_dofs, nonplanar_opt_flag, center_opt_flag, center_opt_type_flag=center_opt_type_flag, surface_function=surface_function)
 
-#@partial(jax.jit, static_argnames = ['ncurves', 'center_opt_flag', 'center_opt_type_flag', 'shape_opt_flag', 'unfixed_orders', 'axis_function', 'surface_function'])
 @partial(jax.jit, static_argnames=['center_opt_flag', 'center_opt_type_flag', 'axis_function', 'surface_function', 'ncurves', 'unfixed_orders', 'shape_opt_flag'])
 def generate_simsopt_simsopt_dofs(simsopt_dofs, ncurves, center_opt_flag, center_opt_type_flag, dofs, shape_opt_flag, unfixed_orders, axis_function, surface_function):
     if center_opt_flag == False and shape_opt_flag:
@@ -233,6 +230,8 @@ def sanity_check_number_of_dofs(dictionary, num_dofs):
             num_dofs_calculated = num_coils
         elif dictionary['optimizables']['center_opt_type_flag'][0] == 'on_surface':
             num_dofs_calculated = 2 * num_coils
+        else:
+            raise ValueError("Should never get here.")
     else:
         num_dofs_calculated = 0
     if coil_type in ['simsopt_stellarator', 'simsopt_windowpane']:
@@ -256,8 +255,6 @@ def sanity_check_number_of_dofs(dictionary, num_dofs):
         raise NotImplemented('CWS curves not yet implemented.')
     else:
         raise ValueError('Not a valid option for coil type.')
-    print(num_dofs)
-    print(num_dofs_calculated)
     assert num_dofs_calculated == num_dofs, 'Number of dofs does not pass the sanity check compared to number of expected dofs.'
 
 def generate_dofs_from_dictionary(full_dictionary):
@@ -380,6 +377,7 @@ def cyclone_optimization_function_scipy(dofs_full, *args):
     num_current_dofs = full_dictionary['num_current_dofs']
     simsopt_dofs_full = dofs_full[:num_current_dofs]
     tally = num_current_dofs
+    num_orders_per_coil_set = []
     coil_sets = full_dictionary['coil_sets']
     for label in coil_sets:
         coil_set_dofs, coil_type, curves, ncurves, unfixed_orders, center_opt_flag, \
@@ -387,6 +385,9 @@ def cyclone_optimization_function_scipy(dofs_full, *args):
             nonplanar_dofs, nonplanar_opt_flag, dofs, shape_opt_flag, unique_shapes, \
             curve_shapes, normal_flag, normal_tors, normal_pols, planar_flag, \
             rotation_flag, rotation_angles, tally = get_coil_set_parameters(dofs_full, full_dictionary, label, tally)
+        num_orders_per_coil_set.append(len(unfixed_orders))
+        if 0 in unfixed_orders:
+            num_orders_per_coil_set[-1] -= 0.5 # For the purposes of counting dofs, 0th order dofs only count for half (3 dofs instead of 6)
         if coil_type == 'simsopt_stellarator':
             simsopt_dofs = generate_simsopt_simsopt_dofs(coil_set_dofs, ncurves, center_opt_flag, center_opt_type_flag, dofs, shape_opt_flag, unfixed_orders, axis_function, surface_function)
         elif coil_type == 'cyclone_stellarator':
@@ -398,12 +399,35 @@ def cyclone_optimization_function_scipy(dofs_full, *args):
         simsopt_dofs_full = np.append(simsopt_dofs_full, simsopt_dofs)
         # coil_dictionary['currents'] = [] # add new currents to dictionary
         # change all the dictionary entries that aren't tracked by the dictionary (i.e. they are in the dofs)
-    objective.x = list(simsopt_dofs_full)
+    # reorder simsopt_dofs_full to account for the fact that Cyclone sorts coils numerically by labal and simsopt does so by string ordering
+    numerically_ordered_simsopt_dofs_full = list(simsopt_dofs_full)
+    string_sorted_mapping = np.array(sorted([f"{i+1}" for i in range(num_current_dofs)]))
+    string_ordered_simsopt_dofs_full = []
+    for i in range(num_current_dofs):
+        string_ordered_simsopt_dofs_full.append(numerically_ordered_simsopt_dofs_full[int(string_sorted_mapping[i])-1])
+    num_curves_per_coil_set = full_dictionary['num_currents']
+    num_dofs_per_curve_per_coil_set = [6 * num_orders for num_orders in num_orders_per_coil_set]
+    num_dofs_per_curve = np.repeat(num_dofs_per_curve_per_coil_set, num_curves_per_coil_set)
+    num_dofs_per_curve = num_dofs_per_curve.astype(int)
+    assert len(num_dofs_per_curve) == num_current_dofs
+    for i in range(num_current_dofs):
+        num_curve_dofs_before_this_curve = sum(num_dofs_per_curve[:int(string_sorted_mapping[i])-1])
+        string_ordered_simsopt_dofs_full.extend(numerically_ordered_simsopt_dofs_full[(num_current_dofs+num_curve_dofs_before_this_curve):(num_current_dofs+num_curve_dofs_before_this_curve+num_dofs_per_curve[int(string_sorted_mapping[i])-1])])
+    objective.x = string_ordered_simsopt_dofs_full
     objective_eval = objective.J()
-    objective_simsopt_grad = objective.dJ()
+    string_ordered_objective_simsopt_grad = objective.dJ()
+    objective_simsopt_grad = []
+    string_sorted_num_dofs_per_curve = [num_dofs_per_curve[int(string_sorted_mapping[i])-1] for i in range(num_current_dofs)]
+    # need to send simsopt string sorted order to Cyclone numerically sorted order
+    for i in range(num_current_dofs):
+        objective_simsopt_grad.extend([string_ordered_objective_simsopt_grad[int(np.argwhere(string_sorted_mapping == f"{i+1}")[0][0])]])
+    for i in range(num_current_dofs):
+        num_curve_dofs_before_this_curve = sum(string_sorted_num_dofs_per_curve[:np.argwhere(string_sorted_mapping == f"{i+1}")[0][0]])
+        objective_simsopt_grad.extend(string_ordered_objective_simsopt_grad[(num_current_dofs+num_curve_dofs_before_this_curve):(num_current_dofs+num_curve_dofs_before_this_curve+string_sorted_num_dofs_per_curve[np.argwhere(string_sorted_mapping == f"{i+1}")[0][0]])])
     cyclone_tally = num_current_dofs
     simsopt_tally = num_current_dofs
-    objective_grad = list(objective_simsopt_grad[:num_current_dofs])
+    objective_grad = objective_simsopt_grad[:num_current_dofs]
+    objective_simsopt_grad = np.array(objective_simsopt_grad)
     for label in coil_sets:
         coil_set_dofs, coil_type, curves, ncurves, unfixed_orders, center_opt_flag, \
             center_opt_type_flag, axis_function, surface_function, planar_dofs, planar_opt_flag, \
