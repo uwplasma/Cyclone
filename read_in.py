@@ -363,6 +363,7 @@ def read_in_toml_config(toml_file):
     full_dictionary['all_currents'] = [(current/simsopt_current_value) * Current(simsopt_current_value) for current in full_dictionary['all_current_values']]
     full_dictionary['all_coils'] = coils_via_symmetries(full_dictionary['all_curves'], full_dictionary['all_currents'], nfp, stellsym)
     biot_savart_field = BiotSavart(full_dictionary['all_coils'])
+    full_dictionary['first_coil_label_number'] = int(full_dictionary['all_coils'][0].current.dof_names[0].replace(':x0','').replace('Current',''))
     if 'oneoverR' in full_dictionary:
         biot_savart_field = biot_savart_field + full_dictionary['oneoverR']['field']
     full_dictionary['biot_savart_field'] = biot_savart_field.set_points(magnetic_surface.gamma().reshape((-1,3)))
