@@ -401,29 +401,30 @@ def cyclone_optimization_function_scipy(dofs_full, *args):
         # change all the dictionary entries that aren't tracked by the dictionary (i.e. they are in the dofs)
     # reorder simsopt_dofs_full to account for the fact that Cyclone sorts coils numerically by labal and simsopt does so by string ordering
     numerically_ordered_simsopt_dofs_full = list(simsopt_dofs_full)
-    string_sorted_mapping = np.array(sorted([f"{i+1}" for i in range(num_current_dofs)]))
+    first_coil_label_number = full_dictionary['first_coil_label_number']
+    string_sorted_mapping = np.array(sorted([f"{i+first_coil_label_number}" for i in range(num_current_dofs)]))
     string_ordered_simsopt_dofs_full = []
     for i in range(num_current_dofs):
-        string_ordered_simsopt_dofs_full.append(numerically_ordered_simsopt_dofs_full[int(string_sorted_mapping[i])-1])
+        string_ordered_simsopt_dofs_full.append(numerically_ordered_simsopt_dofs_full[int(string_sorted_mapping[i])-first_coil_label_number])
     num_curves_per_coil_set = full_dictionary['num_currents']
     num_dofs_per_curve_per_coil_set = [6 * num_orders for num_orders in num_orders_per_coil_set]
     num_dofs_per_curve = np.repeat(num_dofs_per_curve_per_coil_set, num_curves_per_coil_set)
     num_dofs_per_curve = num_dofs_per_curve.astype(int)
     assert len(num_dofs_per_curve) == num_current_dofs
     for i in range(num_current_dofs):
-        num_curve_dofs_before_this_curve = sum(num_dofs_per_curve[:int(string_sorted_mapping[i])-1])
-        string_ordered_simsopt_dofs_full.extend(numerically_ordered_simsopt_dofs_full[(num_current_dofs+num_curve_dofs_before_this_curve):(num_current_dofs+num_curve_dofs_before_this_curve+num_dofs_per_curve[int(string_sorted_mapping[i])-1])])
+        num_curve_dofs_before_this_curve = sum(num_dofs_per_curve[:int(string_sorted_mapping[i])-first_coil_label_number])
+        string_ordered_simsopt_dofs_full.extend(numerically_ordered_simsopt_dofs_full[(num_current_dofs+num_curve_dofs_before_this_curve):(num_current_dofs+num_curve_dofs_before_this_curve+num_dofs_per_curve[int(string_sorted_mapping[i])-first_coil_label_number])])
     objective.x = string_ordered_simsopt_dofs_full
     objective_eval = objective.J()
     string_ordered_objective_simsopt_grad = objective.dJ()
     objective_simsopt_grad = []
-    string_sorted_num_dofs_per_curve = [num_dofs_per_curve[int(string_sorted_mapping[i])-1] for i in range(num_current_dofs)]
+    string_sorted_num_dofs_per_curve = [num_dofs_per_curve[int(string_sorted_mapping[i])-first_coil_label_number] for i in range(num_current_dofs)]
     # need to send simsopt string sorted order to Cyclone numerically sorted order
     for i in range(num_current_dofs):
-        objective_simsopt_grad.extend([string_ordered_objective_simsopt_grad[int(np.argwhere(string_sorted_mapping == f"{i+1}")[0][0])]])
+        objective_simsopt_grad.extend([string_ordered_objective_simsopt_grad[int(np.argwhere(string_sorted_mapping == f"{i+first_coil_label_number}")[0][0])]])
     for i in range(num_current_dofs):
-        num_curve_dofs_before_this_curve = sum(string_sorted_num_dofs_per_curve[:np.argwhere(string_sorted_mapping == f"{i+1}")[0][0]])
-        objective_simsopt_grad.extend(string_ordered_objective_simsopt_grad[(num_current_dofs+num_curve_dofs_before_this_curve):(num_current_dofs+num_curve_dofs_before_this_curve+string_sorted_num_dofs_per_curve[np.argwhere(string_sorted_mapping == f"{i+1}")[0][0]])])
+        num_curve_dofs_before_this_curve = sum(string_sorted_num_dofs_per_curve[:np.argwhere(string_sorted_mapping == f"{i+first_coil_label_number}")[0][0]])
+        objective_simsopt_grad.extend(string_ordered_objective_simsopt_grad[(num_current_dofs+num_curve_dofs_before_this_curve):(num_current_dofs+num_curve_dofs_before_this_curve+string_sorted_num_dofs_per_curve[np.argwhere(string_sorted_mapping == f"{i+first_coil_label_number}")[0][0]])])
     cyclone_tally = num_current_dofs
     simsopt_tally = num_current_dofs
     objective_grad = objective_simsopt_grad[:num_current_dofs]
@@ -458,7 +459,7 @@ def run_minimize(dofs_full, full_dictionary, objective, library='scipy', jac=Tru
         if method is None:
             method = 'L-BFGS-B'
         if tol is None:
-            tol = 1e-15
+            tol = 1e-4
         if options is None:
             options = {}
         res = minimize(cyclone_optimization_function_scipy, dofs_full, args=(full_dictionary, objective), jac=jac, method=method, tol=tol, options=options)
