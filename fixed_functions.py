@@ -84,6 +84,23 @@ def unfixed_planar_dofs(sin_components_all, cos_components_all, unfixed_orders):
         dofs.extend(cosdofs)
     return dofs
 
+def update_all_planar_dofs_from_unfixed_planar_dofs(planar_dofs, unfixed_orders, full_planar_dofs, unique_shapes):
+    unfixed_orders = sorted(unfixed_orders)
+    num_unfixed_orders = len(unfixed_orders)
+    if 0 in unfixed_orders:
+        num_unfixed_orders = num_unfixed_orders - 1
+    highest_order = int(len(full_planar_dofs) / (2*2*unique_shapes))
+    updated_full_planar_dofs = []
+    tally=0
+    for i in range(unique_shapes):
+        this_updated_full_planar_dofs = full_planar_dofs[2*2*highest_order*i:2*2*highest_order*(i+1)]
+        for j in range(highest_order):
+            if j+1 in unfixed_orders:
+                this_updated_full_planar_dofs[4*j:4*(j+1)] = planar_dofs[tally:tally+4]
+                tally = tally + 4
+        updated_full_planar_dofs.extend(this_updated_full_planar_dofs)
+    return updated_full_planar_dofs
+
 def all_nonplanar_dofs(sin_components_all, cos_components_all):
     unique_shapes = len(sin_components_all)
     dofs = []
@@ -114,6 +131,23 @@ def unfixed_nonplanar_dofs(nonplanar_sin_components_all, nonplanar_cos_component
         dofs.extend(cosdofs)
     return dofs
 
+def update_all_nonplanar_dofs_from_unfixed_nonplanar_dofs(nonplanar_dofs, unfixed_orders, full_nonplanar_dofs, unique_shapes):
+    unfixed_orders = sorted(unfixed_orders)
+    num_unfixed_orders = len(unfixed_orders)
+    if 0 in unfixed_orders:
+        num_unfixed_orders = num_unfixed_orders - 1
+    highest_order = int(len(full_nonplanar_dofs) / (2*2*unique_shapes))
+    updated_full_nonplanar_dofs = []
+    tally=0
+    for i in range(unique_shapes):
+        this_updated_full_nonplanar_dofs = full_nonplanar_dofs[2*highest_order*i:2*highest_order*(i+1)]
+        for j in range(highest_order):
+            if j+1 in unfixed_orders:
+                this_updated_full_nonplanar_dofs[2*j:2*(j+1)] = nonplanar_dofs[tally:tally+2]
+                tally = tally + 2
+        updated_full_nonplanar_dofs.extend(this_updated_full_nonplanar_dofs)
+    return updated_full_nonplanar_dofs
+
 def unfixed_simsopt_dofs(simsopt_dofs, unfixed_orders):
     ncurves = len(simsopt_dofs)
     unfixed_orders = sorted(unfixed_orders)
@@ -124,3 +158,20 @@ def unfixed_simsopt_dofs(simsopt_dofs, unfixed_orders):
                 continue
             dofs.extend(simsopt_dofs[i][6*(order-1):6*order])
     return dofs
+
+def update_all_simsopt_dofs_from_unfixed_simsopt_dofs(simsopt_dofs, unfixed_orders, full_simsopt_dofs, ncurves):
+    unfixed_orders = sorted(unfixed_orders)
+    num_unfixed_orders = len(unfixed_orders)
+    if 0 in unfixed_orders:
+        num_unfixed_orders = num_unfixed_orders - 1
+    highest_order = int(len(full_simsopt_dofs) / 6)
+    updated_full_simsopt_dofs = []
+    tally=0
+    for i in range(ncurves):
+        this_updated_full_simsopt_dofs = full_simsopt_dofs[6*highest_order*i:6*highest_order*(i+1)]
+        for j in range(highest_order):
+            if j+1 in unfixed_orders:
+                this_updated_full_simsopt_dofs[6*j:6*(j+1)] = simsopt_dofs[tally:tally+6]
+                tally = tally + 6
+        updated_full_simsopt_dofs.extend(this_updated_full_simsopt_dofs)
+    return updated_full_simsopt_dofs

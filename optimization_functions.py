@@ -3,6 +3,7 @@ import jax
 import jax.numpy as jnp
 from functools import partial
 from Cyclone.helper_functions import planar_vector_list, rotate_windowpane_shapes
+from Cyclone.fixed_functions import update_all_planar_dofs_from_unfixed_planar_dofs, update_all_nonplanar_dofs_from_unfixed_nonplanar_dofs, update_all_simsopt_dofs_from_unfixed_simsopt_dofs
 
 def unpack_curve_centers(dofs, ncurves, center_opt_flag, center_opt_type_flag):
     if center_opt_flag:
@@ -453,6 +454,113 @@ def cyclone_optimization_function_scipy(dofs_full, *args):
     print(objective_eval)
     return objective_eval, objective_grad
 
+def update_dictionary_after_optimization(dofs_post, full_dictionary):
+    full_dictionary['opt_dofs'] = dofs_post
+    # somehow unpack dofs to dictionary format (backwards of generate_dofs_from_dictionary)
+    # First I need to count up currents
+    current_scales = []
+    num_currents_per_coil_set = full_dictionary['num_currents']
+    # Update all_current_values
+    for i, current_object in enumerate(full_dictionary['all_currents']):
+        current_scales.append(current_object.scale)
+        full_dictionary['all_current_values'][i] = current_scales[i] * dofs_post[i]
+    tally = 0
+    for i, coil_set in enumerate(full_dictionary['coil_sets']):
+        this_dict = full_dictionary[coil_set]
+        # Update coil set 'current_list'
+        for j in range(num_currents_per_coil_set[i]):
+            this_dict['currents']['current_list'][j] = current_scales[tally+j] * dofs_post[tally+j]
+        # Update coil set 'currents'
+        for j, current_label in enumerate(this_dict['currents']):
+            if current_label == 'current_list':
+                continue
+            this_dict['currents'][current_label] = this_dict['currents']['current_list'][j]
+        tally += num_currents_per_coil_set[i]
+    # Next up is to count out how many dofs I need
+    # That's the whole point of opt_dofs
+    coil_sets = full_dictionary['coil_sets']
+    for label in coil_sets:
+        this_dict = full_dictionary[label]
+        this_dofs = []
+        coil_set_dofs, coil_type, _, ncurves, unfixed_orders, center_opt_flag, \
+            center_opt_type_flag, axis_function, surface_function, _, planar_opt_flag, \
+            _, nonplanar_opt_flag, _, shape_opt_flag, unique_shapes, \
+            _, normal_flag, _, _, planar_flag, \
+            rotation_flag, _, tally = get_coil_set_parameters(dofs_post, full_dictionary, label, tally)
+        ncenter_dofs, curve_centers = unpack_curve_centers(coil_set_dofs, ncurves, center_opt_flag, center_opt_type_flag)
+        num_orders = len(unfixed_orders)
+        if 0 in unfixed_orders:
+            num_orders = num_orders - 1
+        # Update centers
+        if ncenter_dofs == 3*ncurves:
+            for i in range(ncurves):
+                this_dict['centers'][i] = curve_centers[i]
+            if 'center_tors' in this_dict:
+                this_dict['center_tors'] = 'Untracked after optimizing centers directly.'
+            if 'center_pols' in this_dict:
+                this_dict['center_pols'] = 'Untracked after optimizing centers directly.'
+            this_dofs.extend(this_dict['centers'])
+        elif ncenter_dofs == ncurves:
+            for i in range(ncurves):
+                this_dict['center_tors'][i] = curve_centers[i][0]
+                this_dict['centers'][i] = axis_function(curve_centers[i][0])
+            this_dofs.extend(this_dict['center_tors'])
+        elif ncenter_dofs == 2*ncurves:
+            for i in range(ncurves):
+                this_dict['center_tors'][i] = curve_centers[i][0]
+                this_dict['center_pols'][i] = curve_centers[i][1]
+                this_dict['centers'][i] = surface_function(curve_centers[i][0], curve_centers[i][1])
+            this_dofs.extend(this_dict['center_tors'])
+            this_dofs.extend(this_dict['center_pols'])
+        # after centers is...
+        # simsopt shape - 2*3*order*num_coils       OR
+        # cyclone shape - planar, nonplanar, rotation, normal
+        if coil_type in ['simsopt_stellarator', 'simsopt_windowpane']:
+            if shape_opt_flag:
+                simsopt_dofs = coil_set_dofs[ncenter_dofs:]
+                full_simsopt_dofs = this_dict['full_dofs']
+                full_simsopt_dofs = update_all_simsopt_dofs_from_unfixed_simsopt_dofs(simsopt_dofs, unfixed_orders, full_simsopt_dofs)
+                this_dict['dofs'] = simsopt_dofs
+                this_dict['full_dofs'] = full_simsopt_dofs
+                this_dofs.extend(this_dict['dofs'])
+        elif coil_type in ['cyclone_stellarator', 'cyclone_windowpane']:
+            if planar_opt_flag:
+                nplanar_dofs = 2*num_orders*2*unique_shapes
+                planar_dofs = coil_set_dofs[ncenter_dofs:ncenter_dofs+nplanar_dofs]
+                full_planar_dofs = this_dict['full_planar_dofs']
+                full_planar_dofs = update_all_planar_dofs_from_unfixed_planar_dofs(planar_dofs, unfixed_orders, full_planar_dofs, unique_shapes)
+                this_dict['planar_dofs'] = planar_dofs
+                this_dict['full_planar_dofs'] = full_planar_dofs
+                this_dofs.extend(this_dict['planar_dofs'])
+            else:
+                nplanar_dofs = 0
+            if not planar_flag and nonplanar_opt_flag:
+                nnonplanar_dofs = 2*num_orders*unique_shapes
+                nonplanar_dofs = coil_set_dofs[(ncenter_dofs+nplanar_dofs):(ncenter_dofs+nplanar_dofs+nnonplanar_dofs)]
+                full_nonplanar_dofs = this_dict['full_nonplanar_dofs']
+                full_nonplanar_dofs = update_all_nonplanar_dofs_from_unfixed_nonplanar_dofs(nonplanar_dofs, unfixed_orders, full_nonplanar_dofs, unique_shapes)
+                this_dict['nonplanar_dofs'] = nonplanar_dofs
+                this_dict['full_nonplanar_dofs'] = full_nonplanar_dofs
+                this_dofs.extend(this_dict['nonplanar_dofs'])
+            else:
+                nnonplanar_dofs = 0
+            if rotation_flag:
+                nrotation_dofs = ncurves
+                rotation_dofs = coil_set_dofs[(ncenter_dofs+nplanar_dofs+nnonplanar_dofs):(ncenter_dofs+nplanar_dofs+nnonplanar_dofs+nrotation_dofs)]
+                this_dict['rotation_angles'] = rotation_dofs
+                this_dofs.extend(this_dict['rotation_angles'])
+            else:
+                nrotation_dofs = 0
+            if normal_flag:
+                nnormal_dofs = 2*ncurves
+                normal_dofs = coil_set_dofs[(ncenter_dofs+nplanar_dofs+nnonplanar_dofs+nrotation_dofs):(ncenter_dofs+nplanar_dofs+nnonplanar_dofs+nrotation_dofs+nnormal_dofs)]
+                this_dict['normal_tors'] = normal_dofs[:int(nnormal_dofs/2)]
+                this_dict['normal_pols'] = normal_dofs[int(nnormal_dofs/2):]
+                this_dofs.extend(this_dict['normal_tors'])
+                this_dofs.extend(this_dict['normal_pols'])
+        this_dict['opt_dofs'] = this_dofs
+    return full_dictionary
+
 def run_minimize(dofs_full, full_dictionary, objective, library='scipy', jac=True, method=None, tol=None, options=None):
     if library == 'scipy':
         from scipy.optimize import minimize
@@ -464,7 +572,8 @@ def run_minimize(dofs_full, full_dictionary, objective, library='scipy', jac=Tru
             options = {}
         res = minimize(cyclone_optimization_function_scipy, dofs_full, args=(full_dictionary, objective), jac=jac, method=method, tol=tol, options=options)
     else:
-        raise ValueError('Only scipy minimize is supported at this time')
+        raise NotImplemented('Only scipy minimize is supported at this time')
+    full_dictionary = update_dictionary_after_optimization(res.x, full_dictionary)
     return res.x
 
 def determine_number_of_optimizations(full_dictionary):
