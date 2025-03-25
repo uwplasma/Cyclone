@@ -103,6 +103,22 @@ def clean_optimizables_dictionary(dictionary, coil_set_type, fixed):
         new_dictionary['normal_opt_flag'] = send_to_list(dictionary.pop('normal_opt_flag', [False]))
     return new_dictionary, fixed
 
+def clean_optimization_dictionary(dictionary):
+    new_dictionary = {}
+    new_dictionary['library'] = send_to_list(dictionary.pop('library', ['scipy']))
+    if 'jacobian' in dictionary:
+        new_dictionary['jac'] = send_to_list(dictionary['jacobian'])
+    else:
+        new_dictionary['jac'] = send_to_list(dictionary.pop('jac', [True]))
+    new_dictionary['method'] = send_to_list(dictionary.pop('method', [None]))
+    new_dictionary['tolerance'] = send_to_list(dictionary.pop('tolerance', [1e-4]))
+    if 'MAXITER' in dictionary:
+        new_dictionary['maxiter'] = send_to_list(dictionary['MAXITER'])
+    else:
+        new_dictionary['maxiter'] = send_to_list(dictionary.pop('maxiter', [None]))
+    new_dictionary['options'] = send_to_list(dictionary.pop('options', [{}]))
+    return new_dictionary
+
 def import_oneoverR_field(dictionary):
     from simsopt.field import ToroidalField
     new_dictionary = {}
@@ -360,6 +376,7 @@ def read_in_toml_config(toml_file):
         full_dictionary['all_current_values'].extend(full_dictionary[label]['currents']['current_list'])
         full_dictionary['all_curves'].extend(full_dictionary[label]['curves'])
     simsopt_current_value = optimization_dict.pop('simsopt_current_value', 1)
+    full_dictionary['optimization_parameters'] = clean_optimization_dictionary(optimization_dict)
     full_dictionary['all_currents'] = [(current/simsopt_current_value) * Current(simsopt_current_value) for current in full_dictionary['all_current_values']]
     full_dictionary['all_coils'] = coils_via_symmetries(full_dictionary['all_curves'], full_dictionary['all_currents'], nfp, stellsym)
     biot_savart_field = BiotSavart(full_dictionary['all_coils'])

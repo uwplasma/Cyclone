@@ -561,13 +561,47 @@ def update_dictionary_after_optimization(dofs_post, full_dictionary):
         this_dict['opt_dofs'] = this_dofs
     return full_dictionary
 
-def run_minimize(dofs_full, full_dictionary, objective, library='scipy', jac=True, method=None, tol=None, options=None):
+def run_minimize(dofs_full, full_dictionary, objective):
+    optimization_dict = full_dictionary['optimization_parameters']
+    if 'library' in optimization_dict:
+        library = optimization_dict['library'][0]
+    else:
+        library = 'scipy'
+    if 'jac' in optimization_dict or 'jacobian' in optimization_dict:
+        if 'jac' in optimization_dict:
+            jac = optimization_dict['jac'][0]
+        else:
+            jac = optimization_dict['jacobian'][0]
+    else:
+        jac = True
+    if 'method' in optimization_dict:
+        method = optimization_dict['method'][0]
+    else:
+        method = None
+    if 'tol' in optimization_dict or 'tolerance' in optimization_dict:
+        if 'tol' in optimization_dict:
+            tol = optimization_dict['tol'][0]
+        else:
+            tol = optimization_dict['tolerance'][0]
+    else:
+        tol = 1e-4
+    if 'maxiter' in optimization_dict or 'MAXITER' in optimization_dict:
+        if 'maxiter' in optimization_dict:
+            maxiter = optimization_dict['maxiter'][0]
+        else:
+            maxiter = optimization_dict['MAXITER'][0]
+    else:
+        maxiter = None
+    if 'options' in optimization_dict:
+        options = optimization_dict['options'][0]
+    else:
+        options = {}
+    if maxiter is not None:
+        options.update({'maxiter': maxiter})
     if library == 'scipy':
         from scipy.optimize import minimize
         if method is None:
             method = 'L-BFGS-B'
-        if tol is None:
-            tol = 1e-4
         if options is None:
             options = {}
         res = minimize(cyclone_optimization_function_scipy, dofs_full, args=(full_dictionary, objective), jac=jac, method=method, tol=tol, options=options)
