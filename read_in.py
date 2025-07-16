@@ -99,6 +99,9 @@ def clean_optimizables_dictionary(dictionary, coil_set_type, fixed):
     if coil_set_type in ['cyclone_stellarator', 'cyclone_windowpane']:
         new_dictionary['planar_opt_flag'] = send_to_list(dictionary.pop('planar_opt_flag', [True]))
         new_dictionary['nonplanar_opt_flag'] = send_to_list(dictionary.pop('nonplanar_opt_flag', [False]))
+        planar_flag = dictionary.pop('planar_flag')
+        if planar_flag:
+            new_dictionary['nonplanar_opt_flag'][0] = False
         new_dictionary['rotation_opt_flag'] = send_to_list(dictionary.pop('rotation_opt_flag', [False]))
         new_dictionary['normal_opt_flag'] = send_to_list(dictionary.pop('normal_opt_flag', [False]))
     return new_dictionary, fixed
@@ -118,6 +121,9 @@ def clean_optimization_dictionary(dictionary):
         new_dictionary['maxiter'] = send_to_list(dictionary.pop('maxiter', [None]))
     new_dictionary['options'] = send_to_list(dictionary.pop('options', [{}]))
     return new_dictionary
+
+def clean_objective_dictionary(dictionary):
+    return None
 
 def import_oneoverR_field(dictionary):
     from simsopt.field import ToroidalField
@@ -185,6 +191,7 @@ def import_cyclone_stellarator_coils(dictionary):
     fixed = fixed_to_list(fixed, order)
     sin_cos_components_dictionary = dictionary.pop('sin_cos_components', {})
     optimizables_dictionary = dictionary.pop('optimizables', {})
+    optimizables_dictionary['planar_flag'] = planar_flag
     optimizables_dictionary, fixed = clean_optimizables_dictionary(optimizables_dictionary, 'cyclone_stellarator', fixed)
     curves, ncurves, unfixed_orders, planar_dofs, full_planar_dofs, nonplanar_dofs, full_nonplanar_dofs, normal_tors, normal_pols, rotation_angles, centers, center_tors, unique_shapes, shapes_vector, curve_shapes, axis_function = init_stellarator_coils(axis_representation, ncurves, unique_shapes=unique_shapes, tor_angles=normal_tors, pol_angles=normal_pols, rotation_vector=rotation_vector, tile_as=tile_as, R1 = R1, order=order, numquadpoints=numquadpoints, fixed=fixed, sin_cos_components = sin_cos_components_dictionary)
     if (unique_shapes / ncurves) > (1 - 0.5 / order):
@@ -290,6 +297,7 @@ def import_cyclone_windowpane_coils(dictionary):
     fixed = fixed_to_list(fixed, order)
     sin_cos_components_dictionary = dictionary.pop('sin_cos_components', {})
     optimizables_dictionary = dictionary.pop('optimizables', {})
+    optimizables_dictionary['planar_flag'] = planar_flag
     optimizables_dictionary, fixed = clean_optimizables_dictionary(optimizables_dictionary, 'cyclone_windowpane', fixed)
     curves, ntoroidalcurves, npoloidalcurves, unfixed_orders, planar_dofs, full_planar_dofs, nonplanar_dofs, full_nonplanar_dofs, normal_tors, normal_pols, rotation_angles, centers, center_tors, center_pols, unique_shapes, shapes_matrix, curve_shapes, surface_function = init_windowpane_coils(surface_representation, ntoroidalcurves, npoloidalcurves, unique_shapes=unique_shapes, tor_angles=normal_tors, pol_angles=normal_pols, rotation_matrix=rotation_matrix, tile_as=tile_as, R0=R0, R1=R1, coil_radius = coil_radius, order=order, numquadpoints=numquadpoints, fixed=fixed, normal_to_winding=normal_to_winding, surface_extension=surface_extension, sin_cos_components = sin_cos_components_dictionary)
     if (unique_shapes / sum(npoloidalcurves)) > (1 - 0.5 / order):
