@@ -1,0 +1,40 @@
+[optimization]
+magnetic_surface = 'simsopt/tests/test_files/input.LandremanPaul2021_QA_lowres' # The magnetic surface on which to evaluate B.n or other metrics
+simsopt_current_value = 1e-2 # The value of the Simsopt 'Current' object. Below is specified the actual current in the coils, creating a 'ScaledCurrent' object.
+optimization = 'minimize' # What type of optimization to perform.
+library = 'scipy' # Which package/library should perform the optimization
+jacobian = true # Include/not include the jacobian. Some methods require this.
+method = 'L-BFGS-B' # Method for the optimization
+#tolerance = # Tolerance for the optimization loop
+
+[simsopt_windowpane] # Name here is arbitrary, but needs to be reflected in any sub-blocks
+type = 'simsopt_windowpane' # Specifying windowpane coils with a simsopt basis for the dofs
+default_current = 1000 # Default current of the coils
+surface_representation = 'simsopt/tests/test_files/wout_LandremanPaul2021_QA_lowres.nc' # The 'winding surface' on which the coil centers are initialized
+surface_extension = 0.1 # How far to extend_via_normal the 'winding surface' (above) for the location of the coil centers
+normal_to_winding = false # If true, coils are initialized with their normals aligned with the normal of the 'winding surface'
+ntoroidalcurves = 10 # Number of toroidal 'rings' of coils. Can be a single number, or a list of length ntoroidalcurves giving toroidal angles (normalized from 0-1)
+npoloidalcurves = [15,17,12,11,12,15,17,12,11,12] # Number of coils in each toroidal 'ring' of coils. Can be a single integer, a list of integers, or a list of lists giving poloidal angles (normalized 0-1)
+# default major radius of the 'winding surface' if not specified
+R0 = 1.0
+# default minor radius of the 'winding surface' if not specified
+R1 = 0.5
+# default coil radius
+coil_radius = 0.05
+# Highest order Fourier mode
+order = 5
+# Number of quadrature points per coil
+#numquadpoints = 
+fixed = 3 # Which orders of the coil are fixed. Can be a number (all orders up to and including are fixed) or a list of numbers (each of those orders will be fixed).
+#fixed = 'all'
+#fixed = [1,3]
+[simsopt_windowpane.currents] # Use this to specify individual currents at initialization
+current_0_0 = 1000
+[simsopt_windowpane.dofs] # Use to specify the shape of individual coils at initialization.
+# format is [ [xs(1),xc(1),...], [ys(1),yc(1),...], [zs(1),zc(1),...] ]
+#dofs_0_0 = [ [], [], [] ]
+#dofs_6_3 = [ [], [], [] ]
+[simsopt_windowpane.optimizables] # The options for what dofs to optimize vs. not optimized
+center_opt_flag = false # Whether to optimize the center point of the coils or not
+center_opt_type_flag = 'direct' # How to optimize the center point of the coils. 'direct' optimizes in x,y,z. 'on_surface' optimizes along the 'winding surface'.
+shape_opt_flag = true # Whether to optimize the shape of the coils

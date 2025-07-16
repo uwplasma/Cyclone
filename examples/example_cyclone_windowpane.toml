@@ -1,0 +1,52 @@
+[optimization]
+magnetic_surface = 'simsopt/tests/test_files/input.LandremanPaul2021_QA_lowres' # The magnetic surface on which to evaluate B.n or other metrics
+simsopt_current_value = 1e-2 # The value of the Simsopt 'Current' object. Below is specified the actual current in the coils, creating a 'ScaledCurrent' object.
+optimization = 'minimize' # What type of optimization to perform.
+library = 'scipy' # Which package/library should perform the optimization
+jacobian = true # Include/not include the jacobian.  Some methods require this.
+method = 'L-BFGS-B'# Method for the optimization
+#tolerance = # Tolerance for the optimization loop
+
+[cyclone_windowpane] # Name is arbitray, but needs to be reflected in any sub-blocks
+type = 'cyclone_windowpane' # Specifying windowpane coils with a cyclone basis for the dofs
+default_current = 1000 # Default current of the coils
+planar_flag = false # Whether or not the coils are constrained to be planar coils
+surface_representation = 'simsopt/tests/test_files/wout_LandremanPaul2021_QA_lowres.nc' # The 'winding surface' on which the coil centers are initialized
+surface_extension = 0.15 # How far to extend_via_normal the 'winding surface' (above) for the location of the coil centers
+normal_to_winding = true # If true, coils are initialized with their normals aligned with the normal of the 'winding surface'
+ntoroidalcurves = 4 # Number of toroidal 'rings' of coils. Can be a single number, or a list of length ntoroidalcurves giving toroidal angles (normalized from 0-1)
+# can also specify as a list length ntoroidalcurves which specifies the relative angular location of each coil
+npoloidalcurves = 8 # Number of coils in each toroidal 'ring' of coils. Can be a single integer, a list of integers, or a list of lists giving poloidal angles (normalized 0-1)
+unique_shapes = 10 # The number of unique shapes the coils share. Default is 'None' / optional to specify - this will give unique shapes = # of coils.
+#normal_tors = [] # Use to specify the facing of individual coils at initialization
+#normal_pols = [] # Use to specify the facing of individual coils at initialization
+#rotation_matrix = [] # Use to specify the rotation of the shape of individual coils at initialization
+tile_as = 'random' # How the unique shapes are tiled across the individual coils. 'random' gives each coil a random shape or no coil at location each with equal probability. 'tile' increments the next shape at each next coil. A list of lists will specify specific shapes for each coil, with -1 representing no coil at that location.
+# default major radius of the 'winding surface' if not specified
+R0 = 1.0
+# default minor radius of the 'winding surface' if not specified
+R1 = 0.5
+# default coil radius
+coil_radius = 0.05
+# Highest order Fourier mode
+order = 5
+# Number of quadrature points per coil
+#numquadpoints = 
+fixed = 3 # Which orders of the coil are fixed. Can be a number (all orders up to and including are fixed) or a list of numbers (each of those orders will be fixed).
+#fixed = 'all'
+#fixed = []
+[cyclone_windowpane.currents] # Use this to specify individual currents at initialization
+#current_0_0 = 1000 # current_toroidalring_poloidalcoil
+#current_6_5 = 1000
+[cyclone_windowpane.sin_cos_components] # Use to specify the shape of individual shapes at initialization.
+#sin_components_0 = [ [0,1], [] ]
+#cos_components_0 = [ [1,0], [0,0.5] ]
+#nonplanar_sin_components_0 = [0.1,0]
+#nonplanar_cos_components_0 = [0,0.3]
+[cyclone_windowpane.optimizables] # The options for what dofs to optimize vs. not optimized
+planar_opt_flag = true # Whether or not to optimize the planar components of each shape
+nonplanar_opt_flag = true # Whether or not to optimize the nonplanar components of each shape
+rotation_opt_flag = true  # Whether or not to optimize the rotation of the shape of each coil
+normal_opt_flag = true # Whether or not to optimize the facing (normal to the planar components) of each coil
+center_opt_flag = true # Whether or not to optimize the center of each coil
+center_opt_type_flag = 'direct' # How to optimize the center point of the coils. 'direct' optimizes in x,y,z. 'on_surface' optimizes along the 'winding surface'.

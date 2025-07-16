@@ -1,6 +1,6 @@
 import numpy as np
 import tomli
-from Cyclone.coil_initialization import create_shapes_matrix, init_simsopt_stellarator_coils, init_simsopt_windowpane_coils, init_stellarator_coils, init_windowpane_coils
+from coil_initialization import create_shapes_matrix, init_simsopt_stellarator_coils, init_simsopt_windowpane_coils, init_stellarator_coils, init_windowpane_coils
 from simsopt.field import coils_via_symmetries, Current, BiotSavart
 from simsopt.geo import SurfaceRZFourier
 

@@ -1,7 +1,6 @@
 import numpy as np
 from math import sin, cos
 import jax.numpy as jnp
-from qsc.qsc import Qsc
 import os
 
 def maximum_coil_radius(ntoroidalcurves, npoloidalcurves, nfp, stellsym, R0=1.0, R1=0.5):
@@ -75,6 +74,7 @@ def rotate_windowpane_shapes(sin_components, cos_components, rotation_angle, ord
     return sin_components_out, cos_components_out
 
 def scaled_stel(stel_like, alpha):
+    from qsc.qsc import Qsc
     if not 0 < abs(alpha):
         raise ValueError('Alpha must not be 0')
     rc = [stel_like.rc[0]] + list(alpha * stel_like.rc[1:])
@@ -98,6 +98,7 @@ def scaled_stel(stel_like, alpha):
     return new_stel
 
 def save_scaled_iota(name_or_stel, out_dir='', filename = None, r=0.1, first_alpha = 0.1, last_alpha = 1, number_alpha = 13):
+    from qsc.qsc import Qsc
     if not out_dir == '':
         os.makedirs(out_dir, exist_ok=True)
     alpha_space = np.linspace(first_alpha, last_alpha, number_alpha)

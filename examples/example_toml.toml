@@ -1,0 +1,52 @@
+[optimization] # Parameters for the optimization itself
+magnetic_surface = 'examples/input.LandremanPaul2021_QA_lowres'
+simsopt_current_value = 1e-4
+optimization = 'minimize'
+library = 'scipy'
+jacobian = true
+method = 'L-BFGS-B'
+MAXITER = 400
+tolerance = 1e-10
+
+[stellarator_coils] # Parameters for a set of stellarator coils
+type = 'cyclone_stellarator'
+default_current = 1e5
+planar_flag = false
+axis_representation = 'examples/wout_LandremanPaul2021_QA_lowres.nc'
+ncurves = 5
+tile_as = 'tile'
+R0 = 1
+R1 = 0.5
+order = 10
+[stellarator_coils.optimizables]
+rotation_opt_flag = true
+normal_opt_flag = true
+center_opt_flag = true
+center_opt_type_flag = 'direct'
+planar_opt_flag = true
+nonplanar_opt_flag = true
+
+[windowpane_coils] # Parameters for a set of windowpane coils
+type = 'cyclone_windowpane'
+default_current = 1e5
+planar_flag = true
+surface_representation = 'examples/input.LandremanPaul2021_QA_lowres'
+ntoroidalcurves = 3
+npoloidalcurves = 5
+unique_shapes = 5
+tile_as = 'tile'
+#tile_as = 'random'
+R0 = 1.0
+R1 = 0.3
+coil_radius = 0.05
+order = 3
+fixed = []
+normal_to_winding = true
+surface_extension = 0.3
+[windowpane_coils.optimizables]
+planar_opt_flag = true
+nonplanar_opt_flag = true
+rotation_opt_flag = true
+normal_opt_flag = true
+center_opt_flag = true
+center_opt_type_flag = 'direct'

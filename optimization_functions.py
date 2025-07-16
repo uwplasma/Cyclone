@@ -2,8 +2,8 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 from functools import partial
-from Cyclone.helper_functions import planar_vector_list, rotate_windowpane_shapes
-from Cyclone.fixed_functions import update_all_planar_dofs_from_unfixed_planar_dofs, update_all_nonplanar_dofs_from_unfixed_nonplanar_dofs, update_all_simsopt_dofs_from_unfixed_simsopt_dofs
+from helper_functions import planar_vector_list, rotate_windowpane_shapes
+from fixed_functions import update_all_planar_dofs_from_unfixed_planar_dofs, update_all_nonplanar_dofs_from_unfixed_nonplanar_dofs, update_all_simsopt_dofs_from_unfixed_simsopt_dofs
 
 def unpack_curve_centers(dofs, ncurves, center_opt_flag, center_opt_type_flag):
     if center_opt_flag:

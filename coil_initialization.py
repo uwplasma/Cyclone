@@ -1,11 +1,11 @@
 import numpy as np
 import jax.numpy as jnp
 from math import sin, cos, sqrt, atan2
-from Cyclone.axis_functions import import_axis
-from Cyclone.surface_functions import import_surface
-from Cyclone.helper_functions import maximum_coil_radius, clean_components, planar_vector_list, rotate_windowpane_shapes
-from Cyclone.angle_generation import create_toroidal_angles, create_poloidal_angles, check_tor_pol_rotation_angles
-from Cyclone.fixed_functions import fix_curve, return_unfixed_orders, all_planar_dofs, unfixed_planar_dofs, all_nonplanar_dofs, unfixed_nonplanar_dofs, unfixed_simsopt_dofs
+from axis_functions import import_axis
+from surface_functions import import_surface
+from helper_functions import maximum_coil_radius, clean_components, planar_vector_list, rotate_windowpane_shapes
+from angle_generation import create_toroidal_angles, create_poloidal_angles, check_tor_pol_rotation_angles
+from fixed_functions import fix_curve, return_unfixed_orders, all_planar_dofs, unfixed_planar_dofs, all_nonplanar_dofs, unfixed_nonplanar_dofs, unfixed_simsopt_dofs
 
 def unpack_all_components(sin_cos_components, order, unique_shapes, coil_radius):
     if 'sin_cos_components' in sin_cos_components and len(sin_cos_components) == 1:

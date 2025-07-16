@@ -1,0 +1,53 @@
+[optimization]
+magnetic_surface = 'examples/input.LandremanPaul2021_QA_lowres' # The magnetic surface on which to evaluate B.n or other metrics
+simsopt_current_value = 1e-2 # The value of the Simsopt 'Current' object. Below is specified the actual current in the coils, creating a 'ScaledCurrent' object.
+optimization = 'minimize'# What type of optimization to perform.
+library = 'scipy' # Which package/library should perform the optimization
+jacobian = true # Include/not include the jacobian. Some methods require this.
+method = 'L-BFGS-B'# Method for the optimization
+#tolerance = # Tolerance for the optimization loop
+
+[cyclone_stellarator] # Name is arbitrary, but needs to be reflected in any sub-blocks
+type = 'cyclone_stellarator' # Specifying stellarator/modular/plasma encircling coils with a cyclone basis for the dofs
+default_current = 1e5 # Default current of the coils
+planar_flag = false # Whether or not the coils are constrained to be planar coils
+axis_representation = 'examples/wout_LandremanPaul2021_QA_lowres.nc' # Axis on which to initialize the centers of the coils on
+ncurves = 2 # Number of coils
+# default is None / optional to specify
+unique_shapes = 2 # The number of unique shapes the coils share. Default is 'None' / optional to specify - this will give unique shapes = # of coils.
+# optional to specify
+#normal_tors = [] # Use to specify the facing of individual coils at initialization
+# optional to specify
+#normal_pols = [] # Use to specify the facing of individual coils at initialization
+# optional to specify
+#rotation_vector = [] # Use to specify the rotation of the shape of individual coils at initialization
+# optional to specify, default is 'tile'
+tile_as = 'tile' # How the unique shapes are tiled across the individual coils. 'random' gives each coil a random shape or no coil at location each with equal probability. 'tile' increments the next shape at each next coil. A list of lists will specify specific shapes for each coil, with -1 representing no coil at that location.
+# optional to specify, default is 0.5, default coil radius
+R1 = 0.5
+# Highest order Fourier mode
+order = 2
+# optional to specify
+numquadpoints = 90 # Number of quadrature points per coil
+fixed = 2 # Which orders of the coil are fixed. Can be a number (all orders up to and including are fixed) or a list of numbers (each of those orders will be fixed).
+#fixed = 'all'
+#fixed = [1,3]
+[cyclone_stellarator.currents] # Use this to specify individual currents at initialization
+#current_0 = 10000
+[cyclone_stellarator.sin_cos_components] # Use to specify the shape of individual shapes at initialization.
+# format for each is nested lists - each inner list is representative of an order
+# [ [order=1], [order=2], [order=3],... ]
+# in each list there are two components, one for each planar vector
+# [ [1,0], [0.2,0.1],... ]
+#sin_components_0 = [ [1,0], [], [] ]
+#cos_components_0 = [ [0,1], [], [] ]
+# format
+#nonplanar_sin_components_0 = [0,0,0]
+#nonplanar_cos_components_0 = [0,0,0]
+[cyclone_stellarator.optimizables] # The options for what dofs to optimize vs. not optimized
+rotation_opt_flag = true # Whether or not to optimize the rotation of the shape of each coil
+normal_opt_flag = false # Whether or not to optimize the facing (normal to the planar components) of each coil
+center_opt_flag = true # Whether or not to optimize the center of each coil
+center_opt_type_flag = 'direct' # How to optimize the center point of the coils. 'direct' optimizes in x,y,z. 'on_axis' optimizes along the axis specified above.
+planar_opt_flag = true # Whether or not to optimize the planar components of each shape
+nonplanar_opt_flag = true # Whether or not to optimize the nonplanar components of each shape

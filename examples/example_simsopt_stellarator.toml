@@ -1,0 +1,31 @@
+[optimization]
+magnetic_surface = 'simsopt/tests/test_files/input.LandremanPaul2021_QA_lowres' # The magnetic surface on which to evaluate B.n or other metrics
+simsopt_current_value = 1e-2 # The value of the Simsopt 'Current' object. Below is specified the actual current in the coils, creating a 'ScaledCurrent' object.
+optimization = 'minimize' # What type of optimization to perform.
+library = 'scipy' # Which package/library should perform the optimization
+jacobian = true # Include/not include the jacobian.  Some methods require this.
+method = 'L-BFGS-B'# Method for the optimization
+#tolerance = # Tolerance for the optimization loop
+
+[simsopt_stellarator] # Name is arbitrary, but needs to be reflected in any sub-blocks
+type = 'simsopt_stellarator' # Specifying stellarator/modular/plasma encircling coils with a simsopt basis for the dofs
+default_current = 1e5 # Default current of the coils
+axis_representation = 'simsopt/tests/test_files/wout_LandremanPaul2021_QA_lowres.nc' # Axis on which to initialize the centers of the coils on
+ncurves = 4 # Number of coils
+# default coil radius
+R1 = 0.5
+order = 1 # Highest order Fourier mode
+# Number of quadrature points per coil
+numquadpoints = 'None'
+fixed = 'all' # Which orders of the coil are fixed. Can be a number (all orders up to and including are fixed) or a list of numbers (each of those orders will be fixed).
+[simsopt_stellarator.currents] # Use this to specify individual currents at initialization
+current_0 = 1000 # current_coil
+[simsopt_stellarator.dofs] # Use to specify the shape of individual coils at initialization.
+# format is [ [xs(1),xc(1),...], [ys(1),yc(1),...], [zs(1),zc(1),...] ]
+#dofs_0 = [[],[],[]]
+#dofs_1 = [[],[],[]]
+### up to the number of coils you have
+[simsopt_stellarator.optimizables] # The options for what dofs to optimize vs. not optimized
+center_opt_flag = false # Whether to optimize the center point of the coils or not
+center_opt_type_flag = 'direct' # How to optimize the center point of the coils. 'direct' optimizes in x,y,z. 'on_axis' optimizes along the axis specified above'.
+shape_opt_flag = true # Whether to optimize the shape of the coils
